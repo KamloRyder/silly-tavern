@@ -1,0 +1,146 @@
+// 无限流视觉互动小说游戏 - 全局样式变量
+// 黑金色主题配色方案
+
+// ==================== 颜色变量 ====================
+// 主色调 - 黑金配色
+$color-primary-black: #0a0a0a;
+$color-primary-gold: #d4af37;
+$color-secondary-gold: #f4d03f;
+$color-dark-gold: #b8941e;
+
+// 背景色
+$color-bg-primary: #0f0f0f;
+$color-bg-secondary: #1a1a1a;
+$color-bg-overlay: rgba(0, 0, 0, 0.85);
+$color-bg-card: rgba(20, 20, 20, 0.9);
+
+// 文本色
+$color-text-primary: #f5f5f5;
+$color-text-secondary: #cccccc;
+$color-text-gold: #d4af37;
+$color-text-muted: #888888;
+
+// 边框色
+$color-border-gold: #d4af37;
+$color-border-dark: #333333;
+$color-border-light: #555555;
+
+// 状态色
+$color-success: #4caf50;
+$color-warning: #ff9800;
+$color-danger: #f44336;
+$color-info: #2196f3;
+
+// HP/MP 进度条
+$color-hp: #e74c3c;
+$color-mp: #3498db;
+$color-san: #9b59b6;
+
+// ==================== 字体变量 ====================
+$font-family-primary: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+$font-family-title: 'Georgia', 'Times New Roman', serif;
+
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-base: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 32px;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-bold: 700;
+
+// ==================== 间距变量 ====================
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// ==================== 圆角变量 ====================
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 9999px;
+
+// ==================== 阴影变量 ====================
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+$shadow-gold: 0 0 20px rgba(212, 175, 55, 0.3);
+
+// ==================== 过渡动画 ====================
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ==================== Z-index 层级 ====================
+$z-index-background: 0;
+$z-index-sprite: 10;
+$z-index-ui: 20;
+$z-index-dialogue: 30;
+$z-index-panel: 40;
+$z-index-modal: 50;
+$z-index-toast: 100;
+
+// ==================== 全局样式 ====================
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  color: $color-text-primary;
+  background-color: $color-bg-primary;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ==================== 滚动条样式 ====================
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $color-bg-secondary;
+  border-radius: $border-radius-sm;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $color-border-light;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background: $color-primary-gold;
+  }
+}
+
+// ==================== 通用工具类 ====================
+.text-gold {
+  color: $color-text-gold;
+}
+
+.text-muted {
+  color: $color-text-muted;
+}
+
+.bg-overlay {
+  background-color: $color-bg-overlay;
+}
+
+.border-gold {
+  border: 2px solid $color-border-gold;
+}
+
+.shadow-gold {
+  box-shadow: $shadow-gold;
+}
