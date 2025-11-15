@@ -263,53 +263,41 @@ function resetForm(): void {
   justify-content: center;
   padding: $spacing-xl;
   background: linear-gradient(135deg, $color-bg-primary 0%, $color-bg-secondary 100%);
-}
 
-.generator-container {
-  position: relative;
-  width: 100%;
-  max-width: 600px;
-  background: $color-bg-card;
-  border: 2px solid $color-border-gold;
-  border-radius: $border-radius-lg;
-  padding: $spacing-xl;
-  box-shadow: $shadow-lg, $shadow-gold;
-}
+  @include mobile {
+    padding: $spacing-md;
+    aspect-ratio: auto;
+    min-height: 100vh;
+  }
 
-.close-btn {
-  position: absolute;
-  top: $spacing-md;
-  right: $spacing-md;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid $color-border-gold;
-  border-radius: $border-radius-sm;
-  color: $color-text-gold;
-  font-size: $font-size-lg;
-  cursor: pointer;
-  transition: all $transition-fast;
-
-  &:hover {
-    background: rgba(244, 67, 54, 0.3);
-    border-color: $color-danger;
-    color: $color-danger;
+  @include small-screen {
+    padding: $spacing-sm;
   }
 }
 
+.generator-container {
+  @include modal-container;
+  position: relative;
+  max-width: 600px;
+  width: 100%;
+}
+
+.close-btn {
+  @include modal-close-button;
+}
+
 .generator-title {
-  font-size: $font-size-3xl;
-  color: $color-text-gold;
-  text-align: center;
-  margin-bottom: $spacing-xl;
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  @include modal-title;
 }
 
 .generator-content {
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
+
+  @include mobile {
+    gap: $spacing-md;
+  }
 }
 
 .form-group {
@@ -321,12 +309,20 @@ function resetForm(): void {
     font-size: $font-size-base;
     color: $color-text-gold;
     font-weight: $font-weight-medium;
+
+    @include mobile {
+      font-size: $font-size-sm;
+    }
   }
 }
 
 .difficulty-selector {
   display: flex;
   gap: $spacing-sm;
+
+  @include mobile {
+    gap: 4px;
+  }
 }
 
 .difficulty-btn {
@@ -340,6 +336,17 @@ function resetForm(): void {
   cursor: pointer;
   transition: all $transition-base;
   border-radius: $border-radius-sm;
+
+  @include mobile {
+    padding: $spacing-sm;
+    font-size: $font-size-base;
+    border-width: 1px;
+  }
+
+  @include small-screen {
+    padding: $spacing-xs;
+    font-size: $font-size-sm;
+  }
 
   &:hover {
     background: rgba(212, 175, 55, 0.2);
@@ -359,34 +366,20 @@ function resetForm(): void {
 }
 
 .form-control {
-  padding: $spacing-md;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid $color-border-gold;
-  color: $color-text-primary;
-  font-size: $font-size-base;
-  font-family: $font-family-primary;
-  border-radius: $border-radius-sm;
-  transition: all $transition-base;
-
-  &:focus {
-    outline: none;
-    border-color: $color-primary-gold;
-    box-shadow: $shadow-gold;
-  }
-
-  &::placeholder {
-    color: $color-text-muted;
-  }
+  @include form-control;
 }
 
 textarea.form-control {
   resize: vertical;
   min-height: 100px;
+
+  @include mobile {
+    min-height: 80px;
+  }
 }
 
 .button-group {
-  display: flex;
-  gap: $spacing-md;
+  @include button-group;
   margin-top: $spacing-md;
 }
 

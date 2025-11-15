@@ -30,7 +30,13 @@
             <span class="message-name">{{ message.name }}</span>
             <span class="message-index">#{{ index + 1 }}</span>
           </div>
-          <div class="message-content">{{ cleanMessageContent(message.mes) }}</div>
+          <div
+            class="message-content"
+            :class="{ 'is-collapsed': !expandedMessages.has(index) }"
+            @click="toggleExpand(index)"
+          >
+            {{ cleanMessageContent(message.mes) }}
+          </div>
         </div>
       </div>
     </div>
@@ -72,6 +78,7 @@ interface ChatMessage {
 // ==================== 状态 ====================
 const messages = ref<ChatMessage[]>([]);
 const loading = ref(false);
+const expandedMessages = ref<Set<number>>(new Set());
 
 // ==================== 方法 ====================
 
@@ -202,6 +209,17 @@ function scrollToBottom(): void {
   }
 }
 
+/**
+ * 切换消息展开/折叠状态
+ */
+function toggleExpand(index: number): void {
+  if (expandedMessages.value.has(index)) {
+    expandedMessages.value.delete(index);
+  } else {
+    expandedMessages.value.add(index);
+  }
+}
+
 // ==================== 生命周期 ====================
 onMounted(() => {
   loadMessages();
@@ -282,6 +300,13 @@ onMounted(() => {
   font-size: $font-size-lg;
   cursor: pointer;
   transition: all $transition-fast;
+  flex-shrink: 0;
+
+  @include mobile {
+    width: 28px;
+    height: 28px;
+    font-size: $font-size-base;
+  }
 
   &:hover {
     background: rgba(220, 20, 60, 0.3);
@@ -295,8 +320,16 @@ onMounted(() => {
   overflow-y: auto;
   padding: $spacing-md;
 
+  @include mobile {
+    padding: $spacing-sm;
+  }
+
   &::-webkit-scrollbar {
     width: 8px;
+
+    @include mobile {
+      width: 4px;
+    }
   }
 
   &::-webkit-scrollbar-track {
@@ -353,6 +386,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: $spacing-md;
+
+  @include mobile {
+    gap: $spacing-sm;
+  }
 }
 
 .message-item {
@@ -361,6 +398,10 @@ onMounted(() => {
   border-radius: $border-radius-md;
   padding: $spacing-md;
   transition: all $transition-fast;
+
+  @include mobile {
+    padding: $spacing-sm;
+  }
 
   &:hover {
     border-color: rgba(212, 175, 55, 0.4);
@@ -391,12 +432,20 @@ onMounted(() => {
   font-weight: bold;
   color: $color-text-gold;
   font-size: $font-size-base;
+
+  @include mobile {
+    font-size: $font-size-sm;
+  }
 }
 
 .message-index {
   font-size: $font-size-sm;
   color: $color-text-secondary;
   font-family: monospace;
+
+  @include mobile {
+    font-size: $font-size-xs;
+  }
 }
 
 .message-content {
@@ -405,6 +454,35 @@ onMounted(() => {
   line-height: 1.6;
   word-wrap: break-word;
   white-space: pre-wrap;
+  cursor: pointer;
+  transition: all $transition-fast;
+  position: relative;
+
+  @include mobile {
+    font-size: $font-size-sm;
+    line-height: 1.5;
+  }
+
+  &.is-collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &::after {
+      content: '...';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      padding-left: 20px;
+      background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.4) 20%);
+    }
+  }
+
+  &:hover {
+    color: $color-text-gold;
+  }
 }
 
 .plot-review-footer {
@@ -413,6 +491,11 @@ onMounted(() => {
   display: flex;
   gap: $spacing-sm;
   background: rgba(0, 0, 0, 0.3);
+
+  @include mobile {
+    padding: $spacing-sm;
+    gap: $spacing-xs;
+  }
 }
 
 .action-btn {
@@ -430,8 +513,18 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
 
+  @include mobile {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    gap: 2px;
+  }
+
   span:first-child {
     font-size: $font-size-lg;
+
+    @include mobile {
+      font-size: $font-size-base;
+    }
   }
 
   &:hover {

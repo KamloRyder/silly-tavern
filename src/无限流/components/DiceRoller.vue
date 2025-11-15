@@ -248,13 +248,10 @@ if (availableSkills.value.length > 0) {
 @import '../styles/global.scss';
 
 .dice-roller {
-  width: 100%;
+  @include modal-container;
   max-width: 400px;
-  padding: $spacing-lg;
-  background: $color-bg-overlay;
-  border: 2px solid $color-border-gold;
-  border-radius: $border-radius-lg;
-  box-shadow: $shadow-lg, $shadow-gold;
+  width: 100%;
+  position: relative;
 
   &.is-rolling {
     pointer-events: none;
@@ -265,34 +262,39 @@ if (availableSkills.value.length > 0) {
   text-align: center;
   margin-bottom: $spacing-lg;
 
+  @include mobile {
+    margin-bottom: $spacing-md;
+  }
+
   h3 {
-    color: $color-text-gold;
-    font-size: $font-size-2xl;
+    @include modal-title;
     margin: 0;
-    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+    margin-bottom: 0;
   }
 }
 
 .skill-selection {
   margin-bottom: $spacing-lg;
 
+  @include mobile {
+    margin-bottom: $spacing-md;
+  }
+
   label {
     display: block;
     color: $color-text-gold;
     font-size: $font-size-sm;
     margin-bottom: $spacing-sm;
+
+    @include mobile {
+      font-size: $font-size-xs;
+    }
   }
 
   select {
+    @include form-control;
     width: 100%;
-    padding: $spacing-sm;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid $color-border-gold;
-    border-radius: $border-radius-sm;
-    color: $color-text-primary;
-    font-size: $font-size-base;
     cursor: pointer;
-    transition: all $transition-base;
 
     &:hover:not(:disabled) {
       border-color: $color-secondary-gold;
@@ -312,8 +314,7 @@ if (availableSkills.value.length > 0) {
 }
 
 .roll-actions {
-  display: flex;
-  gap: $spacing-sm;
+  @include button-group;
   margin-bottom: $spacing-lg;
 
   button {
@@ -328,6 +329,11 @@ if (availableSkills.value.length > 0) {
     cursor: pointer;
     transition: all $transition-base;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+
+    @include mobile {
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
+    }
 
     &:hover:not(:disabled) {
       background: linear-gradient(135deg, $color-secondary-gold, $color-primary-gold);
@@ -359,6 +365,10 @@ if (availableSkills.value.length > 0) {
   background: rgba(212, 175, 55, 0.1);
   border: 1px solid $color-border-gold;
   border-radius: $border-radius-sm;
+
+  @include mobile {
+    padding: $spacing-md;
+  }
 }
 
 .dice-display {
@@ -366,6 +376,10 @@ if (availableSkills.value.length > 0) {
   justify-content: center;
   align-items: center;
   margin-bottom: $spacing-lg;
+
+  @include mobile {
+    margin-bottom: $spacing-md;
+  }
 
   .dice-value {
     width: 80px;
@@ -381,12 +395,23 @@ if (availableSkills.value.length > 0) {
     font-weight: $font-weight-bold;
     box-shadow: $shadow-md, $shadow-gold;
     text-shadow: 0 2px 4px rgba(255, 255, 255, 0.3);
+
+    @include mobile {
+      width: 60px;
+      height: 60px;
+      font-size: $font-size-2xl;
+      border-width: 2px;
+    }
   }
 }
 
 .result-info {
   text-align: center;
   margin-bottom: $spacing-md;
+
+  @include mobile {
+    margin-bottom: $spacing-sm;
+  }
 }
 
 .result-level {
@@ -394,6 +419,10 @@ if (availableSkills.value.length > 0) {
   font-weight: $font-weight-bold;
   margin-bottom: $spacing-sm;
   text-shadow: 0 0 10px currentColor;
+
+  @include mobile {
+    font-size: $font-size-xl;
+  }
 
   &.result-critical_success {
     color: $color-success;
@@ -425,11 +454,21 @@ if (availableSkills.value.length > 0) {
   justify-content: space-around;
   color: $color-text-gold;
   font-size: $font-size-sm;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+
+  @include mobile {
+    font-size: $font-size-xs;
+  }
 
   span {
     padding: $spacing-xs $spacing-sm;
     background: rgba(0, 0, 0, 0.5);
     border-radius: $border-radius-sm;
+
+    @include mobile {
+      padding: 4px $spacing-xs;
+    }
   }
 }
 
@@ -444,6 +483,11 @@ if (availableSkills.value.length > 0) {
   font-weight: $font-weight-bold;
   cursor: pointer;
   transition: all $transition-base;
+
+  @include mobile {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-sm;
+  }
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, lighten($color-info, 10%), $color-info);

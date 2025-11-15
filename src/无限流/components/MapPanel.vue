@@ -75,55 +75,116 @@ async function moveToArea(area: Area): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+@import '../styles/global.scss';
+
 .map-panel {
+  @include modal-container;
   width: 100%;
   max-width: 800px;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.9);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
 }
 
 .map-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: $spacing-lg;
+
+  @include mobile {
+    margin-bottom: $spacing-md;
+  }
 
   h2 {
-    color: #d4af37;
-    font-size: 24px;
+    @include modal-title;
     margin: 0;
+    margin-bottom: $spacing-xs;
   }
 }
 
+.instance-name {
+  font-size: $font-size-base;
+  color: $color-text-secondary;
+
+  @include mobile {
+    font-size: $font-size-sm;
+  }
+}
+
+.current-area,
+.connected-areas {
+  margin-bottom: $spacing-lg;
+
+  @include mobile {
+    margin-bottom: $spacing-md;
+  }
+
+  h3 {
+    font-size: $font-size-lg;
+    color: $color-text-gold;
+    margin-bottom: $spacing-md;
+
+    @include mobile {
+      font-size: $font-size-base;
+      margin-bottom: $spacing-sm;
+    }
+  }
+}
+
+.areas-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
 .area-card {
-  padding: 15px;
+  padding: $spacing-md;
   background: rgba(0, 0, 0, 0.6);
-  border: 2px solid #666666;
-  border-radius: 4px;
-  margin-bottom: 10px;
+  border: 2px solid $color-border-dark;
+  border-radius: $border-radius-md;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all $transition-fast;
+
+  @include mobile {
+    padding: $spacing-sm;
+    border-width: 1px;
+  }
 
   &:hover {
-    border-color: #d4af37;
+    border-color: $color-border-gold;
     transform: translateY(-2px);
+    box-shadow: $shadow-gold;
   }
 
   &.current {
-    border-color: #ffd700;
+    border-color: $color-primary-gold;
     cursor: default;
+    background: rgba(212, 175, 55, 0.1);
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  &.discovered {
+    border-color: $color-border-gold;
   }
 }
 
 .area-name {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ffffff;
-  margin-bottom: 8px;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+
+  @include mobile {
+    font-size: $font-size-base;
+  }
 }
 
 .area-description {
-  color: #cccccc;
-  font-size: 14px;
+  color: $color-text-secondary;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+
+  @include mobile {
+    font-size: $font-size-xs;
+  }
 }
 </style>

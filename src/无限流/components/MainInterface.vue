@@ -18,28 +18,34 @@
         <StatusBar v-show="characterStore.hasPlayer" />
 
         <!-- 对话框 -->
-        <DialogueBox v-show="!dialogueClosed" ref="dialogueBoxRef" @closed="dialogueClosed = true" />
+        <DialogueBox v-show="!dialogueClosed" ref="dialogueBoxRef" />
       </template>
+    </div>
 
-      <!-- 战斗模式 UI -->
-      <template v-if="gameStore.mode === 'combat'">
+    <!-- ==================== 战斗模式（模态框） ==================== -->
+    <div v-if="gameStore.mode === 'combat' && !uiHidden" class="modal-overlay" @click="exitCombatMode">
+      <div @click.stop>
         <CombatPanel @close="exitCombatMode" />
-      </template>
+      </div>
+    </div>
 
-      <!-- 互动室模式 UI -->
-      <template v-if="gameStore.mode === 'interaction'">
+    <!-- ==================== 互动室模式（模态框） ==================== -->
+    <div v-if="gameStore.mode === 'interaction' && !uiHidden" class="modal-overlay" @click="exitInteractionMode">
+      <div @click.stop>
         <InteractionRoom @close="exitInteractionMode" />
-      </template>
+      </div>
+    </div>
 
-      <!-- 角色创建模式 UI -->
-      <template v-if="gameStore.mode === 'creation'">
+    <!-- ==================== 角色创建模式（模态框） ==================== -->
+    <div v-if="gameStore.mode === 'creation' && !uiHidden" class="modal-overlay" @click="exitCreationMode">
+      <div @click.stop>
         <CharacterCreator
           :sync-to-tavern="true"
           character-type="player"
           @created="handleCharacterCreated"
           @cancelled="exitCreationMode"
         />
-      </template>
+      </div>
     </div>
 
     <!-- ==================== 控制面板（常驻） ==================== -->
@@ -108,12 +114,13 @@
       {{ uiHidden ? '👁️' : '🙈' }}
     </button>
 
-    <!-- 恢复对话框按钮（右下角） -->
+    <!-- 切换对话框按钮（右下角） -->
     <button
-      v-if="dialogueClosed && !uiHidden && gameStore.mode === 'main'"
-      class="restore-dialogue-btn"
-      title="恢复对话框"
-      @click="restoreDialogue"
+      v-if="!uiHidden && gameStore.mode === 'main'"
+      class="toggle-dialogue-btn"
+      :class="{ active: !dialogueClosed }"
+      :title="dialogueClosed ? '显示对话框' : '隐藏对话框'"
+      @click="toggleDialogue"
     >
       💬
     </button>
@@ -172,7 +179,7 @@
     <!-- 副本记录（模态框） -->
     <div v-if="showInstanceRecord && !uiHidden" class="modal-overlay" @click="toggleInstanceRecord">
       <div @click.stop>
-        <InstanceRecord />
+        <InstanceRecord @close="toggleInstanceRecord" />
       </div>
     </div>
 
@@ -372,12 +379,17 @@ function handleEditCharacter(character: Character): void {
 }
 
 /**
- * 恢复对话框
+ * 切换对话框显示/隐藏
  */
-function restoreDialogue(): void {
-  dialogueClosed.value = false;
-  // 调用 DialogueBox 组件的 openDialogue 方法
-  dialogueBoxRef.value?.openDialogue();
+function toggleDialogue(): void {
+  if (dialogueClosed.value) {
+    // 显示对话框
+    dialogueClosed.value = false;
+    dialogueBoxRef.value?.openDialogue();
+  } else {
+    // 隐藏对话框
+    dialogueClosed.value = true;
+  }
 }
 
 /**
@@ -506,69 +518,38 @@ onBeforeUnmount(() => {
 }
 
 .control-panel {
-  position: fixed;
-  top: calc($spacing-lg + 50px + $spacing-md); // 全屏按钮高度 + 间距
-  right: $spacing-lg;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  z-index: $z-index-ui;
+  @include control-panel-position;
 
-  // 移动端适配
+  // 添加底部渐变遮罩，提示可以滚动
+  &::after {
+    content: '';
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity $transition-base;
+  }
+
+  // 当内容超出时显示渐变
+  &:hover::after {
+    opacity: 1;
+  }
+
   @include mobile {
-    top: calc($spacing-sm + 36px + $spacing-xs);
-    right: $spacing-sm;
-    gap: $spacing-xs;
+    // 移动端始终显示渐变提示
+    &::after {
+      opacity: 0.7;
+    }
   }
 }
 
 .control-btn {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(20, 20, 20, 0.9);
-  border: 2px solid $color-border-gold;
-  border-radius: $border-radius-md;
-  color: $color-text-gold;
-  font-size: $font-size-xl;
-  cursor: pointer;
-  transition: all $transition-fast;
-  box-shadow: $shadow-md;
-
-  // 移动端适配
-  @include mobile {
-    width: 32px;
-    height: 32px;
-    font-size: $font-size-base;
-    border-width: 1px;
-  }
-
-  &:hover {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: $color-secondary-gold;
-    transform: translateX(-4px);
-    box-shadow: $shadow-lg, $shadow-gold;
-
-    @include mobile {
-      transform: translateX(-2px);
-    }
-  }
-
-  &:active {
-    transform: translateX(-2px);
-
-    @include mobile {
-      transform: translateX(-1px);
-    }
-  }
-
-  &.active {
-    background: rgba(212, 175, 55, 0.3);
-    border-color: $color-secondary-gold;
-  }
+  @include control-button;
+  flex-shrink: 0; // 防止按钮被压缩
 }
 
 .modal-overlay {
@@ -585,65 +566,9 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(4px);
 }
 
-// 通用圆形按钮样式
-@mixin round-button {
-  width: 50px;
-  height: 50px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(20, 20, 20, 0.9);
-  border: 2px solid $color-border-gold;
-  border-radius: 50%;
-  color: $color-text-gold;
-  font-size: $font-size-2xl;
-  cursor: pointer;
-  transition: all $transition-fast;
-  box-shadow: $shadow-lg, $shadow-gold;
-  z-index: $z-index-ui;
-
-  // 移动端适配
-  @include mobile {
-    width: 36px;
-    height: 36px;
-    font-size: $font-size-lg;
-    border-width: 1px;
-  }
-
-  &:hover {
-    background: rgba(212, 175, 55, 0.2);
-    border-color: $color-secondary-gold;
-    transform: scale(1.1);
-    box-shadow:
-      $shadow-lg,
-      0 0 30px rgba(212, 175, 55, 0.5);
-
-    @include mobile {
-      transform: scale(1.05);
-    }
-  }
-
-  &:active {
-    transform: scale(1.05);
-
-    @include mobile {
-      transform: scale(1.02);
-    }
-  }
-}
-
 .ui-toggle-btn {
   @include round-button;
-  position: fixed;
-  bottom: $spacing-lg;
-  left: $spacing-lg;
-  z-index: $z-index-controls;
-
-  @include mobile {
-    bottom: $spacing-sm;
-    left: $spacing-sm;
-  }
+  @include fixed-bottom-left;
 
   // UI 隐藏时半透明
   &.ui-hidden {
@@ -656,42 +581,25 @@ onBeforeUnmount(() => {
   }
 }
 
-.restore-dialogue-btn {
+.toggle-dialogue-btn {
   @include round-button;
-  position: fixed;
-  bottom: $spacing-lg;
-  right: $spacing-lg;
-  z-index: $z-index-controls;
+  @include fixed-bottom-right;
 
-  @include mobile {
-    bottom: $spacing-sm;
-    right: $spacing-sm;
+  &.active {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: $color-secondary-gold;
+    box-shadow: $shadow-gold;
   }
 }
 
 .fullscreen-btn {
   @include round-button;
-  position: fixed;
-  top: $spacing-lg;
-  right: $spacing-lg;
-
-  @include mobile {
-    top: $spacing-sm;
-    right: $spacing-sm;
-  }
+  @include fixed-top-right;
 }
 
 .plot-review-btn {
   @include round-button;
-  position: fixed;
-  top: $spacing-lg;
-  left: $spacing-lg;
-  z-index: $z-index-controls;
-
-  @include mobile {
-    top: $spacing-sm;
-    left: $spacing-sm;
-  }
+  @include fixed-top-left;
 
   &.active {
     background: rgba(212, 175, 55, 0.3);

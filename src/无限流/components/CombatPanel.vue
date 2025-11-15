@@ -144,15 +144,22 @@ const emit = defineEmits<{ close: [] }>();
 </script>
 
 <style lang="scss" scoped>
+@import '../styles/global.scss';
+
 .combat-panel {
+  @include modal-container;
   position: relative;
-  width: 100%;
-  max-width: 800px;
-  padding: 20px;
   padding-top: 60px; // 为顶部状态栏留出空间
   background: rgba(0, 0, 0, 0.9);
-  border: 2px solid #d4af37;
-  border-radius: 8px;
+  width: 100%;
+
+  @include mobile {
+    padding-top: 50px;
+  }
+
+  @include small-screen {
+    padding-top: 45px;
+  }
 }
 
 // 顶部状态栏
@@ -168,6 +175,15 @@ const emit = defineEmits<{ close: [] }>();
   background: rgba(0, 0, 0, 0.8);
   border-bottom: 2px solid #d4af37;
   border-radius: 8px 8px 0 0;
+
+  @include mobile {
+    padding: 10px 15px;
+    border-bottom-width: 1px;
+  }
+
+  @include small-screen {
+    padding: 8px 10px;
+  }
 }
 
 .combat-status {
@@ -178,6 +194,17 @@ const emit = defineEmits<{ close: [] }>();
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
+
+    @include mobile {
+      padding: 4px 15px;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    @include small-screen {
+      padding: 3px 10px;
+      font-size: 12px;
+    }
   }
 
   .status-active {
@@ -207,34 +234,14 @@ const emit = defineEmits<{ close: [] }>();
 
 // 右上角退出按钮
 .floating-exit-btn-top {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include modal-close-button;
   background: rgba(244, 67, 54, 0.9);
-  border: 2px solid #f44336;
-  border-radius: 50%;
+  border-color: #f44336;
   color: white;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
 
   &:hover {
     background: rgba(244, 67, 54, 1);
-    transform: scale(1.1);
     box-shadow: 0 0 20px rgba(244, 67, 54, 0.6);
-  }
-
-  &:active {
-    transform: scale(1.05);
   }
 }
 
@@ -243,10 +250,46 @@ const emit = defineEmits<{ close: [] }>();
   justify-content: center;
   margin-bottom: 20px;
 
+  @include mobile {
+    margin-bottom: 15px;
+  }
+
   h2 {
     color: #d4af37;
     font-size: 24px;
     margin: 0;
+
+    @include mobile {
+      font-size: 18px;
+    }
+
+    @include small-screen {
+      font-size: 16px;
+    }
+  }
+}
+
+.enemies-area,
+.players-area {
+  margin-bottom: 20px;
+
+  @include mobile {
+    margin-bottom: 15px;
+  }
+
+  h3 {
+    color: #d4af37;
+    font-size: 18px;
+    margin-bottom: 10px;
+
+    @include mobile {
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+
+    @include small-screen {
+      font-size: 14px;
+    }
   }
 }
 
@@ -254,6 +297,14 @@ const emit = defineEmits<{ close: [] }>();
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  @include mobile {
+    gap: 8px;
+  }
+
+  @include small-screen {
+    gap: 6px;
+  }
 }
 
 .participant {
@@ -261,6 +312,15 @@ const emit = defineEmits<{ close: [] }>();
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid #666666;
   border-radius: 4px;
+
+  @include mobile {
+    padding: 10px;
+    border-width: 1px;
+  }
+
+  @include small-screen {
+    padding: 8px;
+  }
 
   &.player {
     border-color: #4a90e2;
@@ -275,10 +335,51 @@ const emit = defineEmits<{ close: [] }>();
   }
 }
 
+.participant-name {
+  font-size: 16px;
+  font-weight: bold;
+  color: #d4af37;
+  margin-bottom: 8px;
+
+  @include mobile {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  @include small-screen {
+    font-size: 12px;
+  }
+}
+
+.participant-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  @include mobile {
+    gap: 6px;
+  }
+}
+
 .stat-bar {
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @include mobile {
+    gap: 8px;
+  }
+
+  label {
+    min-width: 30px;
+    font-size: 14px;
+    color: #d4af37;
+
+    @include mobile {
+      min-width: 25px;
+      font-size: 12px;
+    }
+  }
 
   .bar-container {
     flex: 1;
@@ -287,6 +388,10 @@ const emit = defineEmits<{ close: [] }>();
     border: 1px solid #666666;
     border-radius: 4px;
     position: relative;
+
+    @include mobile {
+      height: 16px;
+    }
   }
 
   .bar-fill {
@@ -306,13 +411,16 @@ const emit = defineEmits<{ close: [] }>();
     color: #ffffff;
     font-size: 12px;
     z-index: 1;
+
+    @include mobile {
+      font-size: 10px;
+    }
   }
 }
 
 .combat-actions,
 .combat-end-actions {
-  display: flex;
-  gap: 10px;
+  @include button-group;
   margin-top: 20px;
 
   button {
@@ -324,6 +432,11 @@ const emit = defineEmits<{ close: [] }>();
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
+
+    @include mobile {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);

@@ -1,5 +1,8 @@
 <template>
   <div class="instance-record">
+    <!-- 右上角退出按钮 -->
+    <button class="floating-exit-btn" title="关闭" @click="emit('close')">✕</button>
+
     <!-- 副本列表视图 -->
     <div v-if="!selectedInstance" class="instance-list-view">
       <div class="record-header">
@@ -186,6 +189,11 @@ import { useInstanceStore } from '../stores/instanceStore';
 import type { NPCCharacter } from '../types/character';
 import type { InstanceRecord } from '../types/instance';
 
+// ==================== Emits ====================
+const emit = defineEmits<{
+  close: [];
+}>();
+
 // ==================== Store ====================
 const instanceStore = useInstanceStore();
 
@@ -324,14 +332,25 @@ function formatTime(timestamp: number): string {
 @import '../styles/global.scss';
 
 .instance-record {
+  @include modal-container;
+  position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: $color-bg-card;
-  border: 2px solid $color-border-gold;
-  border-radius: $border-radius-lg;
-  overflow: hidden;
+  max-width: 700px;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
+}
+
+.floating-exit-btn {
+  @include modal-close-button;
+  background: rgba(244, 67, 54, 0.9);
+  border-color: $color-danger;
+  color: white;
+
+  &:hover {
+    background: rgba(244, 67, 54, 1);
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.6);
+  }
 }
 
 // ==================== 列表视图 ====================
@@ -504,6 +523,12 @@ function formatTime(timestamp: number): string {
   cursor: pointer;
   transition: all $transition-fast;
 
+  @include mobile {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    min-height: 32px;
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.15);
     color: $color-text-primary;
@@ -580,6 +605,12 @@ function formatTime(timestamp: number): string {
   font-size: $font-size-sm;
   cursor: pointer;
   transition: all $transition-fast;
+
+  @include mobile {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+    min-height: 32px;
+  }
 
   &:hover {
     background: rgba(212, 175, 55, 0.3);

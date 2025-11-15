@@ -353,12 +353,25 @@ onUnmounted(() => {
 .interaction-room {
   width: 100%;
   aspect-ratio: 16 / 9;
+  max-height: 90vh;
   background: $color-bg-card;
   border: 2px solid $color-border-gold;
   border-radius: $border-radius-lg;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+
+  @include mobile {
+    max-height: 95vh;
+    border-width: 1px;
+    aspect-ratio: auto;
+    min-height: 100vh;
+  }
+
+  @include small-screen {
+    max-height: 98vh;
+  }
 }
 
 // ==================== NPC 选择界面 ====================
@@ -368,6 +381,14 @@ onUnmounted(() => {
   width: 100%;
   padding: $spacing-lg;
   overflow-y: auto;
+
+  @include mobile {
+    padding: $spacing-md;
+  }
+
+  @include small-screen {
+    padding: $spacing-sm;
+  }
 }
 
 .selection-header {
@@ -378,11 +399,8 @@ onUnmounted(() => {
 }
 
 .selection-title {
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $color-text-gold;
+  @include modal-title;
   margin-bottom: $spacing-xs;
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .selection-subtitle {
@@ -415,6 +433,11 @@ onUnmounted(() => {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
 }
 
 .npc-card {
@@ -535,6 +558,12 @@ onUnmounted(() => {
   background: rgba(0, 0, 0, 0.3);
   border-radius: $border-radius-md;
   border: 1px solid $color-border-dark;
+  gap: $spacing-sm;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .selection-info {
@@ -591,6 +620,12 @@ onUnmounted(() => {
   padding: $spacing-md $spacing-lg;
   background: rgba(0, 0, 0, 0.5);
   border-bottom: 1px solid $color-border-dark;
+  gap: $spacing-sm;
+
+  @include mobile {
+    padding: $spacing-sm;
+    flex-wrap: wrap;
+  }
 }
 
 .header-left {
@@ -603,6 +638,10 @@ onUnmounted(() => {
   font-size: $font-size-lg;
   font-weight: $font-weight-bold;
   color: $color-text-gold;
+
+  @include mobile {
+    font-size: $font-size-base;
+  }
 }
 
 .participants {
@@ -623,6 +662,10 @@ onUnmounted(() => {
 .header-actions {
   display: flex;
   gap: $spacing-sm;
+
+  @include mobile {
+    gap: 4px;
+  }
 }
 
 .btn-clear,
@@ -633,6 +676,12 @@ onUnmounted(() => {
   font-size: $font-size-sm;
   cursor: pointer;
   transition: all $transition-fast;
+  white-space: nowrap;
+
+  @include mobile {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
+  }
 }
 
 .btn-clear {
@@ -763,24 +812,13 @@ onUnmounted(() => {
 }
 
 .chat-input {
+  @include form-control;
   width: 100%;
-  padding: $spacing-sm;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid $color-border-dark;
-  border-radius: $border-radius-sm;
-  color: $color-text-primary;
-  font-size: $font-size-sm;
-  font-family: $font-family-primary;
   resize: none;
-  transition: border-color $transition-fast;
+  font-size: $font-size-sm;
 
-  &:focus {
-    outline: none;
-    border-color: $color-primary-gold;
-  }
-
-  &::placeholder {
-    color: $color-text-muted;
+  @include mobile {
+    font-size: 16px; // 防止 iOS 自动缩放
   }
 }
 
@@ -827,36 +865,16 @@ onUnmounted(() => {
 
 // ==================== 浮动退出按钮（右上角） ====================
 .floating-exit-btn-top {
-  position: fixed;
-  top: $spacing-lg;
-  right: $spacing-lg;
-  width: 50px;
-  height: 50px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include modal-close-button;
   background: rgba(244, 67, 54, 0.9);
-  border: 2px solid $color-danger;
-  border-radius: 50%;
+  border-color: $color-danger;
   color: white;
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  cursor: pointer;
-  transition: all $transition-fast;
-  box-shadow: $shadow-lg;
-  z-index: 10000; // 确保在最上层
 
   &:hover {
     background: rgba(244, 67, 54, 1);
-    transform: scale(1.1);
     box-shadow:
       $shadow-lg,
       0 0 20px rgba(244, 67, 54, 0.6);
-  }
-
-  &:active {
-    transform: scale(1.05);
   }
 }
 </style>

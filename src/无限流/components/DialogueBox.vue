@@ -1,11 +1,8 @@
 <template>
   <div>
     <div v-if="!isClosed" class="dialogue-box" @click="handleBoxClick">
-      <!-- 关闭按钮 -->
-      <button class="close-button" title="关闭对话框" @click.stop="closeDialogue">✕</button>
-
       <!-- 对话显示 -->
-      <div class="dialogue-display">
+      <div ref="dialogueDisplayRef" class="dialogue-display">
         <div v-if="currentText" class="dialogue-content">
           <div ref="dialogueTextRef" class="dialogue-text">{{ displayText }}</div>
           <div v-if="currentParagraphIndex < paragraphs.length - 1" class="continue-hint">点击继续</div>
@@ -39,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { npcAnalysisService } from '../services/npcAnalysisService';
 import { streamService } from '../services/streamService';
 import { useCharacterStore } from '../stores/characterStore';
@@ -53,16 +50,14 @@ const characterStore = useCharacterStore();
 const instanceStore = useInstanceStore();
 
 // ==================== Emits ====================
-const emit = defineEmits<{
-  closed: [];
-  continue: [];
-}>();
+// 移除了 closed 事件，现在通过外部按钮控制显示/隐藏
 
 // ==================== 状态 ====================
 const isClosed = ref(false);
 const currentText = ref('');
 const displayText = ref('');
 const dialogueTextRef = ref<HTMLElement | null>(null);
+const dialogueDisplayRef = ref<HTMLElement | null>(null);
 const customUserInput = ref('');
 const isCustomSending = ref(false);
 const customInputRef = ref<HTMLTextAreaElement | null>(null);
@@ -87,23 +82,7 @@ const savedState = ref<{
 
 // ==================== 方法 ====================
 
-/**
- * 关闭对话框
- * 保存当前状态以便恢复
- */
-function closeDialogue(): void {
-  // 保存当前状态
-  savedState.value = {
-    currentText: currentText.value,
-    displayText: displayText.value,
-    paragraphs: [...paragraphs.value],
-    currentParagraphIndex: currentParagraphIndex.value,
-  };
-
-  console.log('[DialogueBox] 关闭对话框，已保存状态');
-  isClosed.value = true;
-  emit('closed');
-}
+// 移除了 closeDialogue 函数，现在通过外部按钮控制显示/隐藏
 
 /**
  * 打开对话框
@@ -153,6 +132,17 @@ defineExpose({
 });
 
 /**
+ * 滚动到对话框底部
+ */
+function scrollToBottom(): void {
+  nextTick(() => {
+    if (dialogueDisplayRef.value) {
+      dialogueDisplayRef.value.scrollTop = dialogueDisplayRef.value.scrollHeight;
+    }
+  });
+}
+
+/**
  * 显示当前段落（立即显示，无动画）
  */
 function showCurrentParagraph(): void {
@@ -165,6 +155,8 @@ function showCurrentParagraph(): void {
   // 立即显示文本内容
   if (paragraph.content) {
     displayText.value = paragraph.content;
+    // 滚动到底部
+    scrollToBottom();
   }
 }
 
@@ -244,15 +236,15 @@ async function processNPCCreation(text: string): Promise<void> {
  * 显示文本内容（立即显示，无动画）
  * 解析文本为段落，并显示第一段
  */
-function showText(text: string): void {
+async function showText(text: string): Promise<void> {
   // 隐藏输入框（新内容到来时）
   showInputBox.value = false;
 
   // 保存原始文本（包含代码块和命令）
   currentText.value = text;
 
-  // 处理NPC创建指令（使用原始文本）
-  processNPCCreation(text);
+  // 处理NPC创建指令（使用原始文本）- 等待完成
+  await processNPCCreation(text);
 
   // 解析文本为段落（会过滤掉代码块和命令，只显示给用户看的内容）
   paragraphs.value = parseTextIntoParagraphs(text);
@@ -268,6 +260,8 @@ function showText(text: string): void {
   // 显示第一段
   if (paragraphs.value.length > 0) {
     showCurrentParagraph();
+    // 滚动到底部
+    scrollToBottom();
   } else {
     console.warn('[DialogueBox] 解析后没有段落可显示');
   }
@@ -277,15 +271,15 @@ function showText(text: string): void {
  * 立即显示完整文本
  * 解析文本为段落，并显示第一段
  */
-function showTextInstantly(text: string): void {
+async function showTextInstantly(text: string): Promise<void> {
   // 隐藏输入框（新内容到来时）
   showInputBox.value = false;
 
   // 保存原始文本（包含代码块和命令）
   currentText.value = text;
 
-  // 处理NPC创建指令（使用原始文本）
-  processNPCCreation(text);
+  // 处理NPC创建指令（使用原始文本）- 等待完成
+  await processNPCCreation(text);
 
   // 解析文本为段落（会过滤掉代码块和命令，只显示给用户看的内容）
   paragraphs.value = parseTextIntoParagraphs(text);
@@ -302,6 +296,9 @@ function showTextInstantly(text: string): void {
   if (paragraphs.value.length > 0) {
     const paragraph = paragraphs.value[0];
     displayText.value = paragraph.content;
+
+    // 滚动到底部
+    scrollToBottom();
 
     // 如果只有一段，直接显示输入框
     if (paragraphs.value.length === 1) {
@@ -338,8 +335,8 @@ async function loadLatestMessage(): Promise<void> {
       // 检查是否是 AI 消息（assistant 或 system）
       if ((lastMessage.role === 'assistant' || lastMessage.role === 'system') && lastMessage.message) {
         console.log('[DialogueBox] 显示最新的 AI 消息');
-        // 直接显示消息内容
-        showTextInstantly(lastMessage.message);
+        // 直接显示消息内容 - 等待 NPC 创建完成
+        await showTextInstantly(lastMessage.message);
       } else if (lastMessage.role === 'user') {
         // 如果最后一条是用户消息，显示占位文本
         console.log('[DialogueBox] 最后一条是用户消息，等待 AI 回复');
@@ -351,6 +348,9 @@ async function loadLatestMessage(): Promise<void> {
       currentText.value = '欢迎来到无限流世界';
       displayText.value = '欢迎来到无限流世界';
     }
+
+    // 滚动到底部
+    scrollToBottom();
   } catch (error) {
     console.error('[DialogueBox] 加载最新消息失败:', error);
   }
@@ -364,11 +364,11 @@ function setupStreamCallbacks(): void {
   console.log('[DialogueBox] 设置流式传输回调');
 
   streamService.setCallbacks({
-    onIncremental: (text: string) => {
+    onIncremental: async (text: string) => {
       console.log('[DialogueBox] 接收到增量文本，长度:', text.length);
       // 流式传输中，实时显示文本
       if (text && text.trim()) {
-        showText(text);
+        await showText(text);
         // 如果对话框被关闭，自动打开以显示新消息
         if (isClosed.value) {
           console.log('[DialogueBox] 对话框已关闭，自动打开以显示新消息');
@@ -376,11 +376,11 @@ function setupStreamCallbacks(): void {
         }
       }
     },
-    onComplete: (text: string) => {
+    onComplete: async (text: string) => {
       console.log('[DialogueBox] 流式传输完成，文本长度:', text.length);
       // 流式传输完成，显示完整文本
       if (text && text.trim()) {
-        showTextInstantly(text);
+        await showTextInstantly(text);
         // 如果对话框被关闭，自动打开以显示新消息
         if (isClosed.value) {
           console.log('[DialogueBox] 对话框已关闭，自动打开以显示新消息');
@@ -492,13 +492,13 @@ onBeforeUnmount(() => {
 
 .dialogue-box {
   position: fixed;
-  bottom: calc($spacing-lg + 50px + $spacing-md); // 为底部按钮留出空间（按钮高度 + 间距）
+  bottom: var(--dialogue-bottom-offset);
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 120px); // 为左右两侧按钮留出空间
+  width: calc(100% - var(--dialogue-side-margin));
   max-width: 800px;
   min-height: 120px;
-  max-height: 33vh; // 最大高度为页面的三分之一
+  max-height: var(--dialogue-max-height);
   background: $color-bg-overlay;
   border: 2px solid $color-border-gold;
   border-radius: $border-radius-lg;
@@ -509,16 +509,17 @@ onBeforeUnmount(() => {
   transition: all $transition-base;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 
-  // 移动端适配
   @include mobile {
-    bottom: calc($spacing-sm + 36px + $spacing-xs); // 移动端按钮更小
-    width: calc(100% - 80px); // 移动端按钮更小，留出更少空间
     min-height: 100px;
-    max-height: 33vh;
     padding: $spacing-md;
     border-width: 1px;
     border-radius: $border-radius-md;
+  }
+
+  @include small-screen {
+    padding: $spacing-sm;
   }
 
   &:hover {
@@ -529,31 +530,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.close-button {
-  position: absolute;
-  top: $spacing-sm;
-  right: $spacing-sm;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid $color-border-gold;
-  border-radius: $border-radius-sm;
-  color: $color-text-gold;
-  font-size: $font-size-base;
-  cursor: pointer;
-  transition: all $transition-fast;
-  z-index: 1;
-
-  &:hover {
-    background: rgba(244, 67, 54, 0.3);
-    border-color: $color-danger;
-    color: $color-danger;
-  }
-}
+// 移除了关闭按钮样式，现在通过外部切换按钮控制
 
 .dialogue-display {
   width: 100%;
@@ -625,11 +602,27 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: $spacing-sm;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+
+  @include mobile {
+    margin-top: $spacing-sm;
+    padding-top: $spacing-sm;
+    gap: $spacing-xs;
+  }
+
+  @include small-screen {
+    margin-top: $spacing-xs;
+    padding-top: $spacing-xs;
+    gap: 4px;
+  }
 }
 
 .custom-input-field {
   width: 100%;
   min-height: 80px;
+  max-height: 120px;
   padding: $spacing-md;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid $color-border-light;
@@ -640,12 +633,19 @@ onBeforeUnmount(() => {
   resize: vertical;
   outline: none;
   transition: border-color $transition-base;
+  box-sizing: border-box;
 
-  // 移动端适配
   @include mobile {
-    min-height: 60px;
+    min-height: 50px;
+    max-height: 80px;
     padding: $spacing-sm;
     font-size: 16px; // 防止 iOS 自动缩放
+  }
+
+  @include small-screen {
+    min-height: 40px;
+    max-height: 60px;
+    padding: $spacing-xs;
   }
 
   &:focus {
@@ -669,11 +669,17 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: all $transition-base;
   box-shadow: $shadow-sm;
+  white-space: nowrap;
+  flex-shrink: 0;
 
-  // 移动端适配
   @include mobile {
     padding: $spacing-xs $spacing-md;
     font-size: $font-size-sm;
+  }
+
+  @include small-screen {
+    padding: $spacing-xs $spacing-sm;
+    font-size: $font-size-xs;
   }
 
   &:hover:not(:disabled) {

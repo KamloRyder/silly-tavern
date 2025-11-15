@@ -534,15 +534,22 @@ function initializeBodyParts() {
 @import '../styles/global.scss';
 
 .character-creator {
+  @include modal-container;
   width: 100%;
   max-width: 800px;
-  aspect-ratio: 16 / 10;
-  background: $color-bg-card;
-  border: 2px solid $color-border-gold;
-  border-radius: $border-radius-lg;
+  max-height: 85vh;
   padding: $spacing-lg;
   overflow-y: auto;
-  box-shadow: $shadow-lg;
+
+  @include mobile {
+    padding: $spacing-md;
+    // 确保边框在移动端也显示
+    border-width: 1px;
+  }
+
+  @include small-screen {
+    padding: $spacing-sm;
+  }
 }
 
 .creator-header {
@@ -550,19 +557,25 @@ function initializeBodyParts() {
   margin-bottom: $spacing-lg;
   padding-bottom: $spacing-md;
   border-bottom: 1px solid $color-border-dark;
+
+  @include mobile {
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+  }
 }
 
 .creator-title {
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  color: $color-text-gold;
+  @include modal-title;
   margin-bottom: $spacing-xs;
-  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
 }
 
 .creator-subtitle {
   font-size: $font-size-sm;
   color: $color-text-secondary;
+
+  @include mobile {
+    font-size: $font-size-xs;
+  }
 }
 
 .creator-content {
@@ -590,12 +603,22 @@ function initializeBodyParts() {
   font-weight: $font-weight-bold;
   color: $color-text-gold;
   margin-bottom: $spacing-md;
+
+  @include mobile {
+    font-size: $font-size-base;
+    margin-bottom: $spacing-sm;
+  }
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $spacing-md;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
 }
 
 .form-group {
@@ -641,6 +664,15 @@ function initializeBodyParts() {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: $spacing-md;
+
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-sm;
+  }
+
+  @include small-screen {
+    grid-template-columns: 1fr;
+  }
 }
 
 .attribute-item {
@@ -676,6 +708,15 @@ function initializeBodyParts() {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: $spacing-md;
+
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-sm;
+  }
+
+  @include small-screen {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stat-item {
@@ -784,6 +825,11 @@ function initializeBodyParts() {
   margin-top: $spacing-lg;
   padding-top: $spacing-md;
   border-top: 1px solid $color-border-dark;
+
+  @include mobile {
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
 }
 
 .btn-primary,
@@ -797,6 +843,17 @@ function initializeBodyParts() {
   font-weight: $font-weight-medium;
   cursor: pointer;
   transition: all $transition-fast;
+
+  @include mobile {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-xs;
+    min-height: 36px;
+  }
+
+  @include small-screen {
+    padding: $spacing-xs $spacing-sm;
+    min-height: 32px;
+  }
 
   &:disabled {
     opacity: 0.5;
