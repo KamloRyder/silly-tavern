@@ -84,7 +84,6 @@
       >
         💬
       </button>
-      <button class="control-btn" title="测试功能" @click="testFeatures">🧪</button>
       <button class="control-btn" :class="{ active: showDiceRoller }" title="投骰器" @click="toggleDiceRoller">
         🎲
       </button>
@@ -121,7 +120,7 @@
 
     <!-- 全屏按钮（右上角） -->
     <button
-      v-if="!uiHidden"
+      v-if="!uiHidden && gameStore.mode !== 'interaction'"
       class="fullscreen-btn"
       :title="isFullscreen ? '退出全屏' : '全屏显示'"
       @click="toggleFullscreen"
@@ -176,6 +175,20 @@
         <InstanceRecord />
       </div>
     </div>
+
+    <!-- 剧情回顾面板（左侧，仅在主模式显示） -->
+    <PlotReview v-if="showPlotReview && !uiHidden && gameStore.mode === 'main'" @close="togglePlotReview" />
+
+    <!-- 剧情回顾按钮（左上角，仅在主模式显示） -->
+    <button
+      v-if="!uiHidden && gameStore.mode === 'main'"
+      class="plot-review-btn"
+      :class="{ active: showPlotReview }"
+      title="剧情回顾"
+      @click="togglePlotReview"
+    >
+      📜
+    </button>
   </div>
 </template>
 
@@ -197,6 +210,7 @@ import InstanceGenerator from './InstanceGenerator.vue';
 import InstanceRecord from './InstanceRecord.vue';
 import InteractionRoom from './InteractionRoom.vue';
 import MapPanel from './MapPanel.vue';
+import PlotReview from './PlotReview.vue';
 import StatusBar from './StatusBar.vue';
 
 // ==================== Store ====================
@@ -210,6 +224,7 @@ const showDiceRoller = ref(false);
 const showMapPanel = ref(false);
 const showInstanceGenerator = ref(false);
 const showInstanceRecord = ref(false);
+const showPlotReview = ref(false);
 const dialogueClosed = ref(false);
 const uiHidden = ref(false);
 const isFullscreen = ref(false);
@@ -224,6 +239,18 @@ const currentBackground = computed(() => {
 const activeSprites = computed(() => {
   return gameStore.currentScene?.sprites || [];
 });
+
+// ==================== 监听器 ====================
+
+// 当模式切换时，自动关闭剧情回顾面板
+watch(
+  () => gameStore.mode,
+  newMode => {
+    if (newMode !== 'main' && showPlotReview.value) {
+      showPlotReview.value = false;
+    }
+  },
+);
 
 // ==================== 方法 ====================
 
@@ -278,6 +305,13 @@ function toggleMapPanel(): void {
  */
 function toggleInstanceGenerator(): void {
   showInstanceGenerator.value = !showInstanceGenerator.value;
+}
+
+/**
+ * 切换剧情回顾
+ */
+function togglePlotReview(): void {
+  showPlotReview.value = !showPlotReview.value;
 }
 
 /**
@@ -390,42 +424,6 @@ function handleFullscreenChange(): void {
 }
 
 /**
- * 测试功能
- */
-async function testFeatures(): Promise<void> {
-  try {
-    console.log('=== 开始测试功能 ===');
-
-    // 测试 1: 检查 MVU 服务
-    console.log('测试 1: 加载游戏数据');
-    const gameData = await mvuService.loadGameData();
-    console.log('游戏数据:', gameData);
-
-    // 测试 2: 检查角色数据
-    console.log('测试 2: 角色数据');
-    console.log('主控角色:', characterStore.player);
-    console.log('NPC 数量:', characterStore.npcCount);
-    console.log('NPC 列表:', characterStore.npcList);
-
-    // 测试 3: 检查酒馆服务
-    console.log('测试 3: 酒馆服务');
-    const chatId = tavernService.getCurrentChatId();
-    console.log('当前聊天 ID:', chatId);
-
-    // 测试 4: 检查游戏状态
-    console.log('测试 4: 游戏状态');
-    console.log('当前场景:', gameStore.currentScene);
-    console.log('游戏模式:', gameStore.mode);
-
-    toastr.success('功能测试完成，请查看控制台');
-    console.log('=== 测试完成 ===');
-  } catch (error) {
-    console.error('[MainInterface] 测试失败:', error);
-    toastr.error('测试失败，请查看控制台');
-  }
-}
-
-/**
  * 初始化
  */
 async function initialize(): Promise<void> {
@@ -515,6 +513,13 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: $spacing-sm;
   z-index: $z-index-ui;
+
+  // 移动端适配
+  @include mobile {
+    top: calc($spacing-sm + 36px + $spacing-xs);
+    right: $spacing-sm;
+    gap: $spacing-xs;
+  }
 }
 
 .control-btn {
@@ -533,15 +538,31 @@ onBeforeUnmount(() => {
   transition: all $transition-fast;
   box-shadow: $shadow-md;
 
+  // 移动端适配
+  @include mobile {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-base;
+    border-width: 1px;
+  }
+
   &:hover {
     background: rgba(212, 175, 55, 0.2);
     border-color: $color-secondary-gold;
     transform: translateX(-4px);
     box-shadow: $shadow-lg, $shadow-gold;
+
+    @include mobile {
+      transform: translateX(-2px);
+    }
   }
 
   &:active {
     transform: translateX(-2px);
+
+    @include mobile {
+      transform: translateX(-1px);
+    }
   }
 
   &.active {
@@ -582,6 +603,14 @@ onBeforeUnmount(() => {
   box-shadow: $shadow-lg, $shadow-gold;
   z-index: $z-index-ui;
 
+  // 移动端适配
+  @include mobile {
+    width: 36px;
+    height: 36px;
+    font-size: $font-size-lg;
+    border-width: 1px;
+  }
+
   &:hover {
     background: rgba(212, 175, 55, 0.2);
     border-color: $color-secondary-gold;
@@ -589,10 +618,18 @@ onBeforeUnmount(() => {
     box-shadow:
       $shadow-lg,
       0 0 30px rgba(212, 175, 55, 0.5);
+
+    @include mobile {
+      transform: scale(1.05);
+    }
   }
 
   &:active {
     transform: scale(1.05);
+
+    @include mobile {
+      transform: scale(1.02);
+    }
   }
 }
 
@@ -601,6 +638,12 @@ onBeforeUnmount(() => {
   position: fixed;
   bottom: $spacing-lg;
   left: $spacing-lg;
+  z-index: $z-index-controls;
+
+  @include mobile {
+    bottom: $spacing-sm;
+    left: $spacing-sm;
+  }
 
   // UI 隐藏时半透明
   &.ui-hidden {
@@ -618,6 +661,12 @@ onBeforeUnmount(() => {
   position: fixed;
   bottom: $spacing-lg;
   right: $spacing-lg;
+  z-index: $z-index-controls;
+
+  @include mobile {
+    bottom: $spacing-sm;
+    right: $spacing-sm;
+  }
 }
 
 .fullscreen-btn {
@@ -625,5 +674,29 @@ onBeforeUnmount(() => {
   position: fixed;
   top: $spacing-lg;
   right: $spacing-lg;
+
+  @include mobile {
+    top: $spacing-sm;
+    right: $spacing-sm;
+  }
+}
+
+.plot-review-btn {
+  @include round-button;
+  position: fixed;
+  top: $spacing-lg;
+  left: $spacing-lg;
+  z-index: $z-index-controls;
+
+  @include mobile {
+    top: $spacing-sm;
+    left: $spacing-sm;
+  }
+
+  &.active {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: $color-secondary-gold;
+    box-shadow: $shadow-gold;
+  }
 }
 </style>

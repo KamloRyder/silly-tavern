@@ -1,35 +1,36 @@
 <template>
   <div>
-    <div v-if="!isClosed" class="dialogue-box" :class="{ 'input-mode': isInputMode }" @click="handleBoxClick">
+    <div v-if="!isClosed" class="dialogue-box" @click="handleBoxClick">
       <!-- 关闭按钮 -->
       <button class="close-button" title="关闭对话框" @click.stop="closeDialogue">✕</button>
 
-      <!-- 对话显示模式 -->
-      <div v-if="!isInputMode" class="dialogue-display">
-        <div v-if="currentDialogue" class="dialogue-content">
+      <!-- 对话显示 -->
+      <div class="dialogue-display">
+        <div v-if="currentText" class="dialogue-content">
           <div ref="dialogueTextRef" class="dialogue-text">{{ displayText }}</div>
-          <div v-if="currentParagraphIndex < paragraphs.length - 1" class="continue-hint">
-            点击继续 ({{ currentParagraphIndex + 1 }}/{{ paragraphs.length }})
-          </div>
+          <div v-if="currentParagraphIndex < paragraphs.length - 1" class="continue-hint">点击继续</div>
         </div>
         <div v-else class="dialogue-placeholder">
           <p>欢迎来到无限流世界</p>
-          <p class="hint">正在加载初始消息...</p>
+          <p class="hint">正在加载最新消息...</p>
         </div>
       </div>
 
-      <!-- 用户输入模式 -->
-      <div v-else class="dialogue-input">
+      <!-- 自定义输入框 - 只在 AI 输出完成且所有段落显示完毕后显示 -->
+      <div v-if="showInputBox" class="custom-input-container">
         <textarea
-          ref="inputRef"
-          v-model="userInput"
-          class="input-field"
+          ref="customInputRef"
+          v-model="customUserInput"
+          class="custom-input-field"
           placeholder="输入你的回复..."
-          @keydown.enter.ctrl="handleSend"
-          @click.stop
+          @keydown.enter.ctrl="handleCustomSend"
         ></textarea>
-        <button class="send-button" :disabled="!userInput.trim() || isSending" @click.stop="handleSend">
-          <span v-if="!isSending">发送</span>
+        <button
+          class="custom-send-button"
+          :disabled="!customUserInput.trim() || isCustomSending"
+          @click="handleCustomSend"
+        >
+          <span v-if="!isCustomSending">发送</span>
           <span v-else>发送中...</span>
         </button>
       </div>
@@ -38,14 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { npcAnalysisService } from '../services/npcAnalysisService';
 import { streamService } from '../services/streamService';
 import { useCharacterStore } from '../stores/characterStore';
 import { useGameStore } from '../stores/gameStore';
 import { useInstanceStore } from '../stores/instanceStore';
-import type { DialogueDataType } from '../types/schemas';
-import { typewriter } from '../utils/animation';
 import { parseTextIntoParagraphs, type Paragraph } from '../utils/textParser';
 
 // ==================== Store ====================
@@ -60,19 +59,28 @@ const emit = defineEmits<{
 }>();
 
 // ==================== 状态 ====================
-const isInputMode = ref(false);
 const isClosed = ref(false);
-const userInput = ref('');
-const isSending = ref(false);
-const currentDialogue = ref<DialogueDataType | null>(null);
+const currentText = ref('');
 const displayText = ref('');
 const dialogueTextRef = ref<HTMLElement | null>(null);
-const inputRef = ref<HTMLTextAreaElement | null>(null);
-const currentTypewriterTween = ref<gsap.core.Tween | null>(null);
+const customUserInput = ref('');
+const isCustomSending = ref(false);
+const customInputRef = ref<HTMLTextAreaElement | null>(null);
+
+// 控制输入框显示：只有在 AI 输出完成且所有段落显示完毕后才显示
+const showInputBox = ref(false);
 
 // 段落相关状态
 const paragraphs = ref<Paragraph[]>([]);
 const currentParagraphIndex = ref(0);
+
+// 历史记录保存（用于关闭后恢复）
+const savedState = ref<{
+  currentText: string;
+  displayText: string;
+  paragraphs: Paragraph[];
+  currentParagraphIndex: number;
+} | null>(null);
 
 // ==================== 计算属性 ====================
 // const hasDialogue = computed(() => currentDialogue.value !== null);
@@ -81,26 +89,47 @@ const currentParagraphIndex = ref(0);
 
 /**
  * 关闭对话框
+ * 保存当前状态以便恢复
  */
 function closeDialogue(): void {
+  // 保存当前状态
+  savedState.value = {
+    currentText: currentText.value,
+    displayText: displayText.value,
+    paragraphs: [...paragraphs.value],
+    currentParagraphIndex: currentParagraphIndex.value,
+  };
+
+  console.log('[DialogueBox] 关闭对话框，已保存状态');
   isClosed.value = true;
   emit('closed');
 }
 
 /**
  * 打开对话框
+ * 恢复之前保存的状态
  */
 function openDialogue(): void {
   isClosed.value = false;
+
+  // 如果有保存的状态，恢复它
+  if (savedState.value) {
+    currentText.value = savedState.value.currentText;
+    displayText.value = savedState.value.displayText;
+    paragraphs.value = savedState.value.paragraphs;
+    currentParagraphIndex.value = savedState.value.currentParagraphIndex;
+
+    console.log('[DialogueBox] 打开对话框，已恢复状态');
+  }
 }
 
 /**
  * 处理对话框点击
  * 如果还有未显示的段落，显示下一段
- * 如果所有段落都显示完毕，切换到输入模式
+ * 如果所有段落都显示完毕，显示输入框
  */
 function handleBoxClick(): void {
-  if (isInputMode.value || gameStore.isStreaming) {
+  if (gameStore.isStreaming) {
     return;
   }
 
@@ -109,11 +138,11 @@ function handleBoxClick(): void {
     currentParagraphIndex.value++;
     showCurrentParagraph();
   } else {
-    // 所有段落都显示完毕，切换到输入模式
-    isInputMode.value = true;
-    // 等待 DOM 更新后聚焦输入框
+    // 所有段落都显示完毕，显示输入框
+    showInputBox.value = true;
+    // 聚焦输入框
     nextTick(() => {
-      inputRef.value?.focus();
+      customInputRef.value?.focus();
     });
   }
 }
@@ -124,33 +153,7 @@ defineExpose({
 });
 
 /**
- * 处理发送按钮点击
- */
-async function handleSend(): Promise<void> {
-  if (!userInput.value.trim() || isSending.value) return;
-
-  try {
-    isSending.value = true;
-    const message = userInput.value.trim();
-
-    // 清空输入
-    userInput.value = '';
-
-    // 切换回显示模式
-    isInputMode.value = false;
-
-    // 发送消息
-    await streamService.sendMessage(message);
-  } catch (error) {
-    console.error('[DialogueBox] 发送消息失败:', error);
-    toastr.error('发送消息失败');
-  } finally {
-    isSending.value = false;
-  }
-}
-
-/**
- * 显示当前段落
+ * 显示当前段落（立即显示，无动画）
  */
 function showCurrentParagraph(): void {
   if (currentParagraphIndex.value >= paragraphs.value.length) {
@@ -159,48 +162,31 @@ function showCurrentParagraph(): void {
 
   const paragraph = paragraphs.value[currentParagraphIndex.value];
 
-  // 停止之前的打字机动画
-  if (currentTypewriterTween.value) {
-    currentTypewriterTween.value.kill();
+  // 立即显示文本内容
+  if (paragraph.content) {
+    displayText.value = paragraph.content;
   }
-
-  // 等待 DOM 更新
-  nextTick(() => {
-    if (dialogueTextRef.value && paragraph.content) {
-      // 使用打字机效果显示文本
-      displayText.value = '';
-      currentTypewriterTween.value = typewriter(
-        dialogueTextRef.value,
-        paragraph.content,
-        30, // 30 字符/秒
-        () => {
-          currentTypewriterTween.value = null;
-        },
-      );
-    }
-  });
 }
 
 /**
  * 处理AI的NPC创建指令
  * AI通过{{NPC_CREATE:角色名}}标记来创建NPC
  */
-async function processNPCCreation(): Promise<void> {
-  if (!currentDialogue.value?.content) return;
+async function processNPCCreation(text: string): Promise<void> {
+  if (!text) return;
 
   // 提取NPC创建指令
   const npcCreatePattern = /\{\{NPC_CREATE:([^}]+)\}\}/g;
   const npcNames: string[] = [];
   let match;
 
-  while ((match = npcCreatePattern.exec(currentDialogue.value.content)) !== null) {
+  while ((match = npcCreatePattern.exec(text)) !== null) {
     npcNames.push(match[1].trim());
   }
 
   if (npcNames.length === 0) return;
 
   const isInInstance = gameStore.currentInstanceId !== undefined;
-  const fullText = currentDialogue.value.content;
 
   for (const name of npcNames) {
     try {
@@ -217,7 +203,7 @@ async function processNPCCreation(): Promise<void> {
         }
       } else {
         // 生成新NPC
-        const npcData = npcAnalysisService.generateNPC(fullText, name);
+        const npcData = npcAnalysisService.generateNPC(text, name);
 
         const newNPC: import('../types/character').NPCCharacter = {
           id: `npc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -255,112 +241,151 @@ async function processNPCCreation(): Promise<void> {
 }
 
 /**
- * 显示对话内容（带打字机效果）
+ * 显示文本内容（立即显示，无动画）
  * 解析文本为段落，并显示第一段
  */
-function showDialogue(dialogue: DialogueDataType): void {
-  currentDialogue.value = dialogue;
+function showText(text: string): void {
+  // 隐藏输入框（新内容到来时）
+  showInputBox.value = false;
 
-  // 解析文本为段落
-  paragraphs.value = parseTextIntoParagraphs(dialogue.content);
+  // 保存原始文本（包含代码块和命令）
+  currentText.value = text;
+
+  // 处理NPC创建指令（使用原始文本）
+  processNPCCreation(text);
+
+  // 解析文本为段落（会过滤掉代码块和命令，只显示给用户看的内容）
+  paragraphs.value = parseTextIntoParagraphs(text);
   currentParagraphIndex.value = 0;
 
   // 调试日志
-  console.log('[DialogueBox] 原始内容:', dialogue.content);
+  console.log('[DialogueBox] 原始内容:', text.substring(0, 100) + '...');
   console.log('[DialogueBox] 解析段落数:', paragraphs.value.length);
   paragraphs.value.forEach((p, i) => {
     console.log(`[DialogueBox] 段落 ${i + 1}:`, p.content.substring(0, 50) + (p.content.length > 50 ? '...' : ''));
   });
-
-  // 处理NPC创建指令
-  processNPCCreation();
 
   // 显示第一段
   if (paragraphs.value.length > 0) {
     showCurrentParagraph();
+  } else {
+    console.warn('[DialogueBox] 解析后没有段落可显示');
   }
 }
 
 /**
- * 立即显示完整对话（跳过打字机效果）
+ * 立即显示完整文本
  * 解析文本为段落，并显示第一段
  */
-function showDialogueInstantly(dialogue: DialogueDataType): void {
-  currentDialogue.value = dialogue;
+function showTextInstantly(text: string): void {
+  // 隐藏输入框（新内容到来时）
+  showInputBox.value = false;
 
-  // 解析文本为段落
-  paragraphs.value = parseTextIntoParagraphs(dialogue.content);
+  // 保存原始文本（包含代码块和命令）
+  currentText.value = text;
+
+  // 处理NPC创建指令（使用原始文本）
+  processNPCCreation(text);
+
+  // 解析文本为段落（会过滤掉代码块和命令，只显示给用户看的内容）
+  paragraphs.value = parseTextIntoParagraphs(text);
   currentParagraphIndex.value = 0;
 
   // 调试日志
-  console.log('[DialogueBox] 原始内容:', dialogue.content);
+  console.log('[DialogueBox] 原始内容:', text.substring(0, 100) + '...');
   console.log('[DialogueBox] 解析段落数:', paragraphs.value.length);
   paragraphs.value.forEach((p, i) => {
     console.log(`[DialogueBox] 段落 ${i + 1}:`, p.content.substring(0, 50) + (p.content.length > 50 ? '...' : ''));
   });
 
-  // 处理NPC创建指令
-  processNPCCreation();
-
-  // 立即显示第一段（不使用打字机效果）
+  // 立即显示第一段
   if (paragraphs.value.length > 0) {
     const paragraph = paragraphs.value[0];
     displayText.value = paragraph.content;
+
+    // 如果只有一段，直接显示输入框
+    if (paragraphs.value.length === 1) {
+      showInputBox.value = true;
+      nextTick(() => {
+        customInputRef.value?.focus();
+      });
+    }
+  } else {
+    console.warn('[DialogueBox] 解析后没有段落可显示');
+    displayText.value = '';
   }
 }
 
 /**
- * 加载第 0 楼消息
+ * 加载最新的 AI 消息
  */
-async function loadInitialMessage(): Promise<void> {
+async function loadLatestMessage(): Promise<void> {
   try {
-    // 获取第 0 楼消息
-    const messages = getChatMessages('0-0');
+    console.log('[DialogueBox] 开始加载最新消息...');
 
-    if (messages && messages.length > 0) {
-      const firstMessage = messages[0];
+    // 获取最后一条消息
+    const lastMessages = getChatMessages(-1);
+
+    if (lastMessages && lastMessages.length > 0) {
+      const lastMessage = lastMessages[0];
+
+      console.log('[DialogueBox] 最后一条消息:', {
+        role: lastMessage.role,
+        message_id: lastMessage.message_id,
+        content: lastMessage.message.substring(0, 50) + '...',
+      });
 
       // 检查是否是 AI 消息（assistant 或 system）
-      if ((firstMessage.role === 'assistant' || firstMessage.role === 'system') && firstMessage.message) {
-        console.log('[DialogueBox] 加载第 0 楼消息:', firstMessage.message.substring(0, 50) + '...');
-
-        // 解析消息内容
-        const dialogue = streamService.parseDialogue(firstMessage.message);
-
-        if (dialogue) {
-          // 显示对话
-          showDialogueInstantly(dialogue);
-        } else {
-          // 如果解析失败，直接显示消息内容
-          showDialogueInstantly({
-            speaker: firstMessage.name || 'AI',
-            content: firstMessage.message,
-            timestamp: Date.now(),
-          });
-        }
+      if ((lastMessage.role === 'assistant' || lastMessage.role === 'system') && lastMessage.message) {
+        console.log('[DialogueBox] 显示最新的 AI 消息');
+        // 直接显示消息内容
+        showTextInstantly(lastMessage.message);
+      } else if (lastMessage.role === 'user') {
+        // 如果最后一条是用户消息，显示占位文本
+        console.log('[DialogueBox] 最后一条是用户消息，等待 AI 回复');
+        currentText.value = '等待 AI 回复...';
+        displayText.value = '等待 AI 回复...';
       }
     } else {
-      console.log('[DialogueBox] 未找到第 0 楼消息');
+      console.log('[DialogueBox] 未找到任何消息，显示欢迎信息');
+      currentText.value = '欢迎来到无限流世界';
+      displayText.value = '欢迎来到无限流世界';
     }
   } catch (error) {
-    console.error('[DialogueBox] 加载第 0 楼消息失败:', error);
+    console.error('[DialogueBox] 加载最新消息失败:', error);
   }
 }
 
-// ==================== 流式传输监听 ====================
-onMounted(async () => {
-  // 设置流式传输回调
+/**
+ * 设置流式传输回调
+ * 这个函数可以被多次调用以重新注册回调
+ */
+function setupStreamCallbacks(): void {
+  console.log('[DialogueBox] 设置流式传输回调');
+
   streamService.setCallbacks({
-    onIncremental: (_text: string, dialogue: DialogueDataType | null) => {
-      // 只显示格式完整的对话
-      if (dialogue) {
-        showDialogue(dialogue);
+    onIncremental: (text: string) => {
+      console.log('[DialogueBox] 接收到增量文本，长度:', text.length);
+      // 流式传输中，实时显示文本
+      if (text && text.trim()) {
+        showText(text);
+        // 如果对话框被关闭，自动打开以显示新消息
+        if (isClosed.value) {
+          console.log('[DialogueBox] 对话框已关闭，自动打开以显示新消息');
+          isClosed.value = false;
+        }
       }
     },
-    onComplete: (_text: string, dialogue: DialogueDataType | null) => {
-      // 流式传输完成，显示完整对话
-      if (dialogue) {
-        showDialogueInstantly(dialogue);
+    onComplete: (text: string) => {
+      console.log('[DialogueBox] 流式传输完成，文本长度:', text.length);
+      // 流式传输完成，显示完整文本
+      if (text && text.trim()) {
+        showTextInstantly(text);
+        // 如果对话框被关闭，自动打开以显示新消息
+        if (isClosed.value) {
+          console.log('[DialogueBox] 对话框已关闭，自动打开以显示新消息');
+          isClosed.value = false;
+        }
       }
     },
     onError: (error: Error) => {
@@ -368,41 +393,97 @@ onMounted(async () => {
       toastr.error('接收对话失败');
     },
   });
+}
 
-  console.log('[DialogueBox] 组件已挂载');
+/**
+ * 处理自定义输入框的发送
+ * 将内容同步到酒馆输入框并触发发送
+ */
+async function handleCustomSend(): Promise<void> {
+  if (!customUserInput.value.trim() || isCustomSending.value) return;
 
-  // 加载第 0 楼消息
-  await loadInitialMessage();
+  const message = customUserInput.value.trim();
+
+  try {
+    isCustomSending.value = true;
+
+    console.log('[DialogueBox] 用户输入:', message);
+
+    // 查找酒馆的输入框和发送按钮
+    const $tavernTextarea = $('#send_textarea', window.parent.document);
+    const $sendButton = $('#send_but', window.parent.document);
+
+    if ($tavernTextarea.length > 0 && $sendButton.length > 0) {
+      // 1. 将内容设置到酒馆的输入框
+      $tavernTextarea.val(message);
+
+      // 触发 input 事件，确保酒馆知道内容已更改
+      $tavernTextarea.trigger('input');
+
+      console.log('[DialogueBox] 已将内容同步到酒馆输入框');
+
+      // 2. 清空自定义输入框并隐藏
+      customUserInput.value = '';
+      showInputBox.value = false;
+
+      // 3. 显示等待提示
+      currentText.value = '等待 AI 回复...';
+      displayText.value = '等待 AI 回复...';
+
+      // 4. 触发酒馆的发送按钮点击
+      $sendButton.trigger('click');
+
+      console.log('[DialogueBox] 已触发酒馆发送按钮');
+    } else {
+      console.error('[DialogueBox] 未找到酒馆输入框或发送按钮');
+      toastr.error('无法发送消息：未找到酒馆输入框');
+      // 恢复输入内容
+      customUserInput.value = message;
+    }
+  } catch (error) {
+    console.error('[DialogueBox] 发送消息失败:', error);
+    toastr.error('发送消息失败');
+    // 恢复输入内容
+    customUserInput.value = message;
+  } finally {
+    isCustomSending.value = false;
+  }
+}
+
+// ==================== 流式传输监听 ====================
+onMounted(async () => {
+  console.log('[DialogueBox] 组件开始挂载');
+
+  // 设置流式传输回调
+  setupStreamCallbacks();
+
+  // 加载最新的消息
+  await loadLatestMessage();
+
+  console.log('[DialogueBox] 组件挂载完成');
 });
 
-// ==================== 监听 gameStore 的对话状态 ====================
+// 监听游戏模式变化，当从其他模式返回主游戏时重新设置回调
 watch(
-  () => gameStore.streamingDialogue,
-  dialogue => {
-    if (dialogue) {
-      showDialogue(dialogue);
-    }
-  },
-);
-
-watch(
-  () => gameStore.finalDialogue,
-  dialogue => {
-    if (dialogue) {
-      showDialogueInstantly(dialogue);
+  () => gameStore.mode,
+  (newMode, oldMode) => {
+    console.log('[DialogueBox] 游戏模式变化:', oldMode, '->', newMode);
+    if (newMode === 'main' && oldMode !== 'main') {
+      console.log('[DialogueBox] 返回主游戏模式，重新设置流式传输回调');
+      setupStreamCallbacks();
     }
   },
 );
 
 // ==================== 清理 ====================
 onBeforeUnmount(() => {
-  // 停止打字机动画
-  if (currentTypewriterTween.value) {
-    currentTypewriterTween.value.kill();
-  }
+  console.log('[DialogueBox] 组件即将卸载');
 
-  // 清除回调
-  streamService.clearCallbacks();
+  // 注意：不清除 streamService 回调，因为：
+  // 1. DialogueBox 可能只是被隐藏而不是真正卸载
+  // 2. 其他组件（如 InteractionRoom）可能会清除回调
+  // 3. 我们希望在重新打开时仍能接收消息
+  console.log('[DialogueBox] 组件卸载完成（保留流式传输回调）');
 });
 </script>
 
@@ -411,12 +492,13 @@ onBeforeUnmount(() => {
 
 .dialogue-box {
   position: fixed;
-  bottom: $spacing-lg;
+  bottom: calc($spacing-lg + 50px + $spacing-md); // 为底部按钮留出空间（按钮高度 + 间距）
   left: 50%;
   transform: translateX(-50%);
-  width: 80%;
+  width: calc(100% - 120px); // 为左右两侧按钮留出空间
   max-width: 800px;
-  min-height: 150px;
+  min-height: 120px;
+  max-height: 33vh; // 最大高度为页面的三分之一
   background: $color-bg-overlay;
   border: 2px solid $color-border-gold;
   border-radius: $border-radius-lg;
@@ -425,16 +507,25 @@ onBeforeUnmount(() => {
   box-shadow: $shadow-lg, $shadow-gold;
   cursor: pointer;
   transition: all $transition-base;
+  display: flex;
+  flex-direction: column;
+
+  // 移动端适配
+  @include mobile {
+    bottom: calc($spacing-sm + 36px + $spacing-xs); // 移动端按钮更小
+    width: calc(100% - 80px); // 移动端按钮更小，留出更少空间
+    min-height: 100px;
+    max-height: 33vh;
+    padding: $spacing-md;
+    border-width: 1px;
+    border-radius: $border-radius-md;
+  }
 
   &:hover {
     border-color: $color-secondary-gold;
     box-shadow:
       $shadow-lg,
       0 0 30px rgba(212, 175, 55, 0.5);
-  }
-
-  &.input-mode {
-    cursor: default;
   }
 }
 
@@ -466,13 +557,16 @@ onBeforeUnmount(() => {
 
 .dialogue-display {
   width: 100%;
-  height: 100%;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto; // 内容超出时显示滚动条
+  min-height: 0; // 允许 flex 子元素缩小
 }
 
 .dialogue-content {
   flex: 1;
+  min-height: 0; // 允许 flex 子元素缩小
 }
 
 .dialogue-text {
@@ -481,6 +575,11 @@ onBeforeUnmount(() => {
   line-height: 1.8;
   white-space: pre-wrap;
   word-wrap: break-word;
+
+  @include mobile {
+    font-size: $font-size-sm;
+    line-height: 1.6;
+  }
 }
 
 .continue-hint {
@@ -519,16 +618,18 @@ onBeforeUnmount(() => {
   }
 }
 
-.dialogue-input {
-  width: 100%;
+.custom-input-container {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: $spacing-sm;
 }
 
-.input-field {
+.custom-input-field {
   width: 100%;
-  min-height: 100px;
+  min-height: 80px;
   padding: $spacing-md;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid $color-border-light;
@@ -540,6 +641,13 @@ onBeforeUnmount(() => {
   outline: none;
   transition: border-color $transition-base;
 
+  // 移动端适配
+  @include mobile {
+    min-height: 60px;
+    padding: $spacing-sm;
+    font-size: 16px; // 防止 iOS 自动缩放
+  }
+
   &:focus {
     border-color: $color-primary-gold;
   }
@@ -549,7 +657,7 @@ onBeforeUnmount(() => {
   }
 }
 
-.send-button {
+.custom-send-button {
   align-self: flex-end;
   padding: $spacing-sm $spacing-lg;
   background: linear-gradient(135deg, $color-primary-gold, $color-dark-gold);
@@ -561,6 +669,12 @@ onBeforeUnmount(() => {
   cursor: pointer;
   transition: all $transition-base;
   box-shadow: $shadow-sm;
+
+  // 移动端适配
+  @include mobile {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-sm;
+  }
 
   &:hover:not(:disabled) {
     background: linear-gradient(135deg, $color-secondary-gold, $color-primary-gold);

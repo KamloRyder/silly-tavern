@@ -119,12 +119,12 @@
         </div>
       </div>
 
-      <!-- 右下角退出按钮 -->
-      <button class="floating-exit-btn" title="退出互动室" @click="exitRoom">✕</button>
+      <!-- 右上角退出按钮（互动中） -->
+      <button class="floating-exit-btn-top" title="退出互动室" @click="exitRoom">✕</button>
     </div>
 
-    <!-- 左下角退出按钮（NPC 选择界面） -->
-    <button v-if="!interactionStore.isInRoom" class="floating-exit-btn" title="返回主界面" @click="emit('close')">
+    <!-- 右上角退出按钮（NPC 选择界面） -->
+    <button v-if="!interactionStore.isInRoom" class="floating-exit-btn-top" title="返回主界面" @click="emit('close')">
       ✕
     </button>
   </div>
@@ -271,23 +271,31 @@ async function clearDialogues(): Promise<void> {
  */
 function setupStreamCallbacks(): void {
   streamService.setCallbacks({
-    onIncremental: (_text: string, dialogue: DialogueDataType | null) => {
+    onIncremental: (text: string) => {
       isStreaming.value = true;
-      if (dialogue) {
-        streamingDialogue.value = dialogue;
-      }
+      // 创建临时对话对象用于显示流式内容
+      streamingDialogue.value = {
+        speaker: 'AI',
+        content: text,
+        timestamp: Date.now(),
+      };
       scrollToBottom();
     },
-    onComplete: (_text: string, dialogue: DialogueDataType | null) => {
+    onComplete: (text: string) => {
       isStreaming.value = false;
 
-      if (dialogue) {
-        // 添加到对话记录
-        interactionStore.addDialogue(dialogue);
+      // 创建完整的对话对象
+      const dialogue: DialogueDataType = {
+        speaker: 'AI',
+        content: text,
+        timestamp: Date.now(),
+      };
 
-        // 保存到 MVU
-        interactionStore.saveDialogues();
-      }
+      // 添加到对话记录
+      interactionStore.addDialogue(dialogue);
+
+      // 保存到 MVU
+      interactionStore.saveDialogues();
 
       streamingDialogue.value = null;
       scrollToBottom();
@@ -817,10 +825,10 @@ onUnmounted(() => {
   font-size: $font-size-base;
 }
 
-// ==================== 浮动退出按钮 ====================
-.floating-exit-btn {
+// ==================== 浮动退出按钮（右上角） ====================
+.floating-exit-btn-top {
   position: fixed;
-  bottom: $spacing-lg;
+  top: $spacing-lg;
   right: $spacing-lg;
   width: 50px;
   height: 50px;

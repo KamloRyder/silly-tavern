@@ -180,7 +180,7 @@ onMounted(() => {
 
 .status-bar {
   position: fixed;
-  top: $spacing-lg;
+  top: calc($spacing-lg + 50px + $spacing-md); // 为剧情回顾按钮留出空间
   left: $spacing-lg;
   width: 220px;
   background: $color-bg-card;
@@ -189,6 +189,15 @@ onMounted(() => {
   padding: $spacing-sm $spacing-md;
   z-index: $z-index-ui;
   box-shadow: $shadow-md;
+
+  // 移动端适配
+  @include mobile {
+    top: calc($spacing-sm + 36px + $spacing-xs); // 移动端按钮更小
+    left: $spacing-sm;
+    width: 160px;
+    padding: $spacing-xs $spacing-sm;
+    border-width: 1px;
+  }
 }
 
 .character-name {
@@ -198,6 +207,11 @@ onMounted(() => {
   text-align: center;
   margin-bottom: $spacing-sm;
   text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+
+  @include mobile {
+    font-size: $font-size-sm;
+    margin-bottom: $spacing-xs;
+  }
 }
 
 .status-bars {
@@ -228,6 +242,10 @@ onMounted(() => {
   border: 1px solid $color-border-dark;
   border-radius: $border-radius-sm;
   overflow: hidden;
+
+  @include mobile {
+    height: 16px;
+  }
 }
 
 .progress-fill {

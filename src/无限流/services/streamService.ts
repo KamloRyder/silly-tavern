@@ -1,7 +1,5 @@
 // 流式传输服务 - 管理 AI 流式传输和对话生成
 
-import YAML from 'yaml';
-import type { DialogueDataType } from '../types/schemas';
 import { mvuService } from './mvuService';
 
 /**
@@ -13,8 +11,8 @@ type StreamContext = 'main_plot' | 'interaction_room';
  * 流式传输事件回调
  */
 interface StreamCallbacks {
-  onIncremental?: (text: string, dialogue: DialogueDataType | null) => void;
-  onComplete?: (text: string, dialogue: DialogueDataType | null) => void;
+  onIncremental?: (text: string) => void;
+  onComplete?: (text: string) => void;
   onError?: (error: Error) => void;
 }
 
@@ -54,15 +52,15 @@ class StreamService {
     this.isStreaming = true;
     this.currentStreamText = text;
 
-    // 尝试解析对话内容
-    const dialogue = this.parseDialogue(text);
+    console.log('[Stream Service] 接收增量文本，长度:', text.length, '回调数量:', Object.keys(this.callbacks).length);
 
     // 调用回调函数
     if (this.callbacks.onIncremental) {
-      this.callbacks.onIncremental(text, dialogue);
+      console.log('[Stream Service] 调用 onIncremental 回调');
+      this.callbacks.onIncremental(text);
+    } else {
+      console.warn('[Stream Service] 没有设置 onIncremental 回调');
     }
-
-    console.log('[Stream Service] 接收增量文本:', text.substring(0, 50) + '...');
   }
 
   /**
@@ -74,15 +72,24 @@ class StreamService {
       this.isStreaming = false;
       this.currentStreamText = text;
 
-      console.log('[Stream Service] 流式传输完成，文本长度:', text.length);
+      console.log(
+        '[Stream Service] 流式传输完成，文本长度:',
+        text.length,
+        '回调数量:',
+        Object.keys(this.callbacks).length,
+      );
 
-      // 解析完整的对话内容
-      const dialogue = this.parseDialogue(text);
-
-      // 调用回调函数
+      // 调用回调函数（用于界面显示）
       if (this.callbacks.onComplete) {
-        this.callbacks.onComplete(text, dialogue);
+        console.log('[Stream Service] 调用 onComplete 回调');
+        this.callbacks.onComplete(text);
+      } else {
+        console.warn('[Stream Service] 没有设置 onComplete 回调');
       }
+
+      // 注意：不修改聊天记录中的消息
+      // generate() 会自动将 AI 输出保存到聊天记录
+      // 我们保持原样，让酒馆自然地处理消息存储
 
       // 如果包含 MVU 命令，解析并更新变量
       if (this.containsMVUCommands(text)) {
@@ -108,25 +115,22 @@ class StreamService {
 
   /**
    * 发送消息触发 AI 生成
+   * 使用酒馆的标准流程：用户输入和 AI 输出都会自动保存到聊天记录
    * @param message 用户输入的消息
-   * @param options 生成选项
    */
-  async sendMessage(message: string, options?: { raw?: boolean }): Promise<void> {
+  async sendMessage(message: string): Promise<void> {
     try {
       console.log('[Stream Service] 发送消息:', message);
 
-      // 根据上下文添加前缀或特殊标记
-      let userInput = message;
-      if (this.context === 'interaction_room') {
-        userInput = `[互动室模式] ${message}`;
-      }
+      // 使用 generate 触发 AI 生成
+      // generate 会自动将用户输入和 AI 输出保存到聊天记录
+      // 重要：必须启用 should_stream 才能触发流式传输事件
+      await generate({
+        user_input: message,
+        should_stream: true,
+      });
 
-      // 使用 generate 或 generateRaw 触发 AI 生成
-      if (options?.raw) {
-        await generateRaw({ user_input: userInput });
-      } else {
-        await generate({ user_input: userInput });
-      }
+      console.log('[Stream Service] 消息已发送，等待 AI 回复');
     } catch (error) {
       console.error('[Stream Service] 发送消息失败:', error);
       toastr.error('发送消息失败');
@@ -135,46 +139,6 @@ class StreamService {
       }
       throw error;
     }
-  }
-
-  /**
-   * 解析 YAML 格式的对话内容
-   * 只返回格式完整的对话，如果格式不完整则返回 null
-   * @param text 文本内容
-   */
-  parseDialogue(text: string): DialogueDataType | null {
-    try {
-      // 尝试解析 YAML 格式
-      const parsed = YAML.parse(text);
-
-      // 验证必需字段
-      if (parsed && typeof parsed === 'object' && parsed.speaker && parsed.content) {
-        return {
-          speaker: parsed.speaker,
-          content: parsed.content,
-          timestamp: Date.now(),
-          characterId: parsed.characterId,
-        };
-      }
-
-      // 如果不是 YAML 格式，尝试作为纯文本对话
-      if (text && text.trim().length > 0) {
-        // 检查是否是简单的对话格式 "角色名: 对话内容"
-        const simpleDialogueMatch = text.match(/^([^:：]+)[：:]\s*(.+)$/s);
-        if (simpleDialogueMatch) {
-          return {
-            speaker: simpleDialogueMatch[1].trim(),
-            content: simpleDialogueMatch[2].trim(),
-            timestamp: Date.now(),
-          };
-        }
-      }
-    } catch (error) {
-      // 解析失败，可能是格式不完整或不是 YAML
-      console.log('[Stream Service] 对话解析失败（可能格式不完整）:', error);
-    }
-
-    return null;
   }
 
   /**
@@ -199,12 +163,14 @@ class StreamService {
    */
   setCallbacks(callbacks: StreamCallbacks): void {
     this.callbacks = { ...this.callbacks, ...callbacks };
+    console.log('[Stream Service] 回调已设置，当前回调:', Object.keys(this.callbacks));
   }
 
   /**
    * 清除回调函数
    */
   clearCallbacks(): void {
+    console.log('[Stream Service] 清除所有回调');
     this.callbacks = {};
   }
 

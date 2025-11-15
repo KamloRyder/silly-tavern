@@ -1,13 +1,20 @@
 <template>
   <div class="combat-panel" :class="{ 'combat-ended': !combatStore.isActive }">
+    <!-- 顶部状态栏 -->
+    <div class="combat-status-bar">
+      <div class="combat-status">
+        <span v-if="combatStore.isActive" class="status-active">进行中</span>
+        <span v-else-if="combatStore.isVictory" class="status-victory">胜利</span>
+        <span v-else-if="combatStore.isDefeat" class="status-defeat">失败</span>
+        <span v-else-if="combatStore.isEscaped" class="status-escaped">已逃脱</span>
+      </div>
+    </div>
+
+    <!-- 右上角退出按钮 -->
+    <button class="floating-exit-btn-top" title="退出战斗" @click="emit('close')">✕</button>
+
     <div class="combat-header">
       <h2>战斗 - 第 {{ combatStore.currentRound }} 回合</h2>
-      <div class="combat-status">
-        <span v-if="combatStore.isActive">进行中</span>
-        <span v-else-if="combatStore.isVictory" class="victory">胜利</span>
-        <span v-else-if="combatStore.isDefeat" class="defeat">失败</span>
-        <span v-else-if="combatStore.isEscaped" class="escaped">已逃脱</span>
-      </div>
     </div>
 
     <div class="enemies-area">
@@ -138,17 +145,102 @@ const emit = defineEmits<{ close: [] }>();
 
 <style lang="scss" scoped>
 .combat-panel {
+  position: relative;
   width: 100%;
   max-width: 800px;
   padding: 20px;
+  padding-top: 60px; // 为顶部状态栏留出空间
   background: rgba(0, 0, 0, 0.9);
   border: 2px solid #d4af37;
   border-radius: 8px;
 }
 
+// 顶部状态栏
+.combat-status-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 2px solid #d4af37;
+  border-radius: 8px 8px 0 0;
+}
+
+.combat-status {
+  span {
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .status-active {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(74, 144, 226, 0.5);
+  }
+
+  .status-victory {
+    background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+  }
+
+  .status-defeat {
+    background: linear-gradient(135deg, #e24a4a 0%, #b83838 100%);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(226, 74, 74, 0.5);
+  }
+
+  .status-escaped {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 152, 0, 0.5);
+  }
+}
+
+// 右上角退出按钮
+.floating-exit-btn-top {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(244, 67, 54, 0.9);
+  border: 2px solid #f44336;
+  border-radius: 50%;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+
+  &:hover {
+    background: rgba(244, 67, 54, 1);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.6);
+  }
+
+  &:active {
+    transform: scale(1.05);
+  }
+}
+
 .combat-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 20px;
 
   h2 {
