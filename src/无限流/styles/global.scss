@@ -1,0 +1,612 @@
+// 无限流视觉互动小说游戏 - 全局样式变量
+// 黑金色主题配色方案
+
+// ==================== 颜色变量 ====================
+// 主色调 - 黑金配色
+$color-primary-black: #0a0a0a;
+$color-primary-gold: #d4af37;
+$color-secondary-gold: #f4d03f;
+$color-dark-gold: #b8941e;
+
+// 背景色
+$color-bg-primary: #0f0f0f;
+$color-bg-secondary: #1a1a1a;
+$color-bg-overlay: rgba(0, 0, 0, 0.85);
+$color-bg-card: rgba(20, 20, 20, 0.9);
+
+// 文本色
+$color-text-primary: #f5f5f5;
+$color-text-secondary: #cccccc;
+$color-text-gold: #d4af37;
+$color-text-muted: #888888;
+
+// 边框色
+$color-border-gold: #d4af37;
+$color-border-dark: #333333;
+$color-border-light: #555555;
+
+// 状态色
+$color-success: #4caf50;
+$color-warning: #ff9800;
+$color-danger: #f44336;
+$color-info: #2196f3;
+
+// HP/MP 进度条
+$color-hp: #e74c3c;
+$color-mp: #3498db;
+$color-san: #9b59b6;
+
+// ==================== 字体变量 ====================
+$font-family-primary: 'Microsoft YaHei', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+$font-family-title: 'Georgia', 'Times New Roman', serif;
+
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-base: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 20px;
+$font-size-2xl: 24px;
+$font-size-3xl: 32px;
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-bold: 700;
+
+// ==================== 间距变量 ====================
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// ==================== 圆角变量 ====================
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 9999px;
+
+// ==================== 阴影变量 ====================
+$shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+$shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+$shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+$shadow-gold: 0 0 20px rgba(212, 175, 55, 0.3);
+$text-shadow-gold: 0 0 10px rgba(212, 175, 55, 0.5);
+
+// ==================== 过渡动画 ====================
+$transition-fast: 0.15s ease;
+$transition-base: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// ==================== 响应式断点 ====================
+$breakpoint-mobile: 768px;
+$breakpoint-tablet: 1024px;
+$breakpoint-desktop: 1440px;
+
+// ==================== Z-index 层级 ====================
+$z-index-background: 0;
+$z-index-sprite: 10;
+$z-index-ui: 20;
+$z-index-dialogue: 30;
+$z-index-panel: 40;
+$z-index-controls: 45;
+$z-index-modal: 50;
+$z-index-character-creation: 60; // 角色创建页面
+$z-index-welcome: 70; // 欢迎页面（最高优先级）
+$z-index-toast: 100;
+
+// ==================== 全局样式 ====================
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-family-primary;
+  font-size: $font-size-base;
+  color: $color-text-primary;
+  background-color: $color-bg-primary;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// ==================== 滚动条样式 ====================
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $color-bg-secondary;
+  border-radius: $border-radius-sm;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $color-border-light;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background: $color-primary-gold;
+  }
+}
+
+// ==================== 通用工具类 ====================
+.text-gold {
+  color: $color-text-gold;
+}
+
+.text-muted {
+  color: $color-text-muted;
+}
+
+.bg-overlay {
+  background-color: $color-bg-overlay;
+}
+
+.border-gold {
+  border: 2px solid $color-border-gold;
+}
+
+.shadow-gold {
+  box-shadow: $shadow-gold;
+}
+
+// ==================== 全局弹出层 Z-Index 规则 ====================
+// 确保所有弹出的页面（对话框、战斗系统、角色管理等）显示在按钮之上
+
+// 模态框遮罩层
+.modal-overlay {
+  z-index: $z-index-modal !important;
+}
+
+// 所有对话框和面板 - 统一使用 modal 层级
+.dialogue-box,
+.combat-panel,
+.character-panel,
+.character-creator,
+.instance-record,
+.instance-generator,
+.interaction-room,
+.dice-roller,
+.map-panel,
+.plot-review {
+  z-index: $z-index-modal !important;
+}
+
+// ==================== 响应式 Mixins ====================
+@mixin mobile {
+  @media (max-width: #{$breakpoint-mobile - 1px}) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: #{$breakpoint-mobile}) and (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: #{$breakpoint-tablet}) {
+    @content;
+  }
+}
+
+@mixin mobile-and-tablet {
+  @media (max-width: #{$breakpoint-tablet - 1px}) {
+    @content;
+  }
+}
+
+@mixin small-screen {
+  @media (max-width: 480px) {
+    @content;
+  }
+}
+
+// ==================== 响应式布局变量（CSS 变量） ====================
+:root {
+  // 按钮尺寸
+  --btn-size-round: 50px;
+  --btn-size-control: 40px;
+  --btn-font-size-round: #{$font-size-2xl};
+  --btn-font-size-control: #{$font-size-xl};
+
+  // 间距
+  --spacing-page: #{$spacing-lg};
+  --spacing-control-gap: #{$spacing-sm};
+
+  // 对话框
+  --dialogue-bottom-offset: calc(#{$spacing-lg} + 50px + #{$spacing-md});
+  --dialogue-side-margin: 120px;
+  --dialogue-max-height: 40vh;
+
+  // 控制面板
+  --control-panel-top: calc(#{$spacing-lg} + 50px + #{$spacing-md});
+  --control-panel-right: #{$spacing-lg};
+
+  @include mobile {
+    // 移动端按钮尺寸
+    --btn-size-round: 36px;
+    --btn-size-control: 32px;
+    --btn-font-size-round: #{$font-size-lg};
+    --btn-font-size-control: #{$font-size-base};
+
+    // 移动端间距
+    --spacing-page: #{$spacing-sm};
+    --spacing-control-gap: #{$spacing-xs};
+
+    // 移动端对话框
+    --dialogue-bottom-offset: calc(#{$spacing-sm} + 36px + #{$spacing-xs});
+    --dialogue-side-margin: 120px;
+    --dialogue-max-height: 45vh;
+
+    // 移动端控制面板
+    --control-panel-top: calc(#{$spacing-sm} + 36px + #{$spacing-xs});
+    --control-panel-right: #{$spacing-sm};
+  }
+
+  @include small-screen {
+    // 小屏幕对话框
+    --dialogue-side-margin: 100px;
+    --dialogue-max-height: 50vh;
+
+    // 小屏幕按钮进一步缩小
+    --btn-size-round: 32px;
+    --btn-size-control: 28px;
+  }
+}
+
+// ==================== 通用按钮 Mixins ====================
+// 圆形按钮样式（用于 UI 切换、全屏等）
+@mixin round-button {
+  width: var(--btn-size-round);
+  height: var(--btn-size-round);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 20, 0.9);
+  border: 2px solid $color-border-gold;
+  border-radius: 50%;
+  color: $color-text-gold;
+  font-size: var(--btn-font-size-round);
+  cursor: pointer;
+  transition: all $transition-fast;
+  box-shadow: $shadow-lg, $shadow-gold;
+  z-index: $z-index-controls; // 使用较低的 z-index，确保在弹出层下方
+
+  @include mobile {
+    border-width: 1px;
+  }
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: $color-secondary-gold;
+    transform: scale(1.1);
+    box-shadow:
+      $shadow-lg,
+      0 0 30px rgba(212, 175, 55, 0.5);
+
+    @include mobile {
+      transform: scale(1.05);
+    }
+  }
+
+  &:active {
+    transform: scale(1.05);
+
+    @include mobile {
+      transform: scale(1.02);
+    }
+  }
+}
+
+// 控制面板按钮样式（用于右侧功能按钮）
+@mixin control-button {
+  width: var(--btn-size-control);
+  height: var(--btn-size-control);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 20, 20, 0.9);
+  border: 2px solid $color-border-gold;
+  border-radius: $border-radius-md;
+  color: $color-text-gold;
+  font-size: var(--btn-font-size-control);
+  cursor: pointer;
+  transition: all $transition-fast;
+  box-shadow: $shadow-md;
+
+  @include mobile {
+    border-width: 1px;
+  }
+
+  &:hover {
+    background: rgba(212, 175, 55, 0.2);
+    border-color: $color-secondary-gold;
+    transform: translateX(-4px);
+    box-shadow: $shadow-lg, $shadow-gold;
+
+    @include mobile {
+      transform: translateX(-2px);
+    }
+  }
+
+  &:active {
+    transform: translateX(-2px);
+
+    @include mobile {
+      transform: translateX(-1px);
+    }
+  }
+
+  &.active {
+    background: rgba(212, 175, 55, 0.3);
+    border-color: $color-secondary-gold;
+  }
+}
+
+// ==================== 响应式定位 Mixins ====================
+// 固定在右下角的按钮（避免与控制面板重叠）
+@mixin fixed-bottom-right {
+  position: fixed;
+  bottom: var(--spacing-page);
+  right: var(--spacing-page);
+  z-index: $z-index-controls;
+
+  @include mobile {
+    // 移动端避免与右侧控制面板重叠
+    right: calc(var(--spacing-page) + var(--btn-size-control) + var(--spacing-control-gap));
+  }
+
+  @include small-screen {
+    right: calc(var(--spacing-page) + var(--btn-size-control) + 4px);
+  }
+}
+
+// 固定在左下角的按钮
+@mixin fixed-bottom-left {
+  position: fixed;
+  bottom: var(--spacing-page);
+  left: var(--spacing-page);
+  z-index: $z-index-controls;
+}
+
+// 固定在右上角的按钮
+@mixin fixed-top-right {
+  position: fixed;
+  top: var(--spacing-page);
+  right: var(--spacing-page);
+}
+
+// 固定在左上角的按钮
+@mixin fixed-top-left {
+  position: fixed;
+  top: var(--spacing-page);
+  left: var(--spacing-page);
+  z-index: $z-index-controls;
+}
+
+// 右侧控制面板定位
+@mixin control-panel-position {
+  position: fixed;
+  top: var(--control-panel-top);
+  right: var(--control-panel-right);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-control-gap);
+  z-index: $z-index-ui;
+
+  // 限制最大高度，避免超出屏幕
+  max-height: calc(100vh - var(--control-panel-top) - var(--spacing-page));
+  overflow-y: auto;
+  overflow-x: visible;
+
+  // 隐藏滚动条但保持滚动功能
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE/Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome/Safari
+  }
+
+  @include mobile {
+    // 移动端进一步限制高度，为底部按钮留出空间
+    max-height: calc(100vh - var(--control-panel-top) - var(--btn-size-round) - var(--spacing-page) * 2);
+  }
+
+  @include small-screen {
+    // 小屏幕可能需要更多空间
+    max-height: calc(100vh - var(--control-panel-top) - var(--btn-size-round) - 16px);
+  }
+}
+
+// ==================== 模态框/面板响应式 Mixins ====================
+// 全屏模态框容器（用于副本生成器、互动室等）
+@mixin modal-container {
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: $color-bg-card;
+  border: 2px solid $color-border-gold;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  box-shadow: $shadow-lg, $shadow-gold;
+
+  @include mobile {
+    max-width: 95vw;
+    max-height: 95vh;
+    padding: $spacing-md;
+    border-width: 1px;
+  }
+
+  @include small-screen {
+    max-width: 98vw;
+    padding: $spacing-sm;
+  }
+}
+
+// ==================== 模态框内元素自适应系统 ====================
+// 所有模态框内的按钮、输入框等元素随模态框宽度同比例缩放
+// 基准：800px 宽度为 100% 比例
+
+.modal-overlay,
+.dialogue-box,
+.combat-panel,
+.character-panel,
+.character-creator,
+.instance-record,
+.instance-generator,
+.interaction-room,
+.dice-roller,
+.map-panel,
+.plot-review {
+  // 计算缩放比例：当前宽度 / 基准宽度(800px)
+  --modal-scale: min(1, calc(100vw / 800));
+
+  @include mobile {
+    --modal-scale: min(1, calc(95vw / 800));
+  }
+
+  @include small-screen {
+    --modal-scale: min(1, calc(98vw / 800));
+  }
+
+  // 应用缩放到所有内部元素
+  button,
+  input,
+  textarea,
+  select,
+  .btn,
+  .form-control,
+  .modal-title,
+  .close-btn {
+    font-size: calc(var(--base-font-size, 1rem) * var(--modal-scale));
+    padding: calc(var(--base-padding, 12px) * var(--modal-scale));
+    border-radius: calc(var(--base-border-radius, 8px) * var(--modal-scale));
+    min-height: calc(var(--base-min-height, 40px) * var(--modal-scale));
+  }
+
+  // 标题特殊处理
+  h1,
+  h2,
+  h3,
+  .modal-title {
+    font-size: calc(var(--base-title-size, 2rem) * var(--modal-scale));
+  }
+
+  // 间距自适应
+  .button-group,
+  .form-group {
+    gap: calc(16px * var(--modal-scale));
+  }
+}
+
+// 模态框关闭按钮（右上角）
+@mixin modal-close-button {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid $color-border-gold;
+  border-radius: $border-radius-sm;
+  color: $color-text-gold;
+  font-size: $font-size-lg;
+  cursor: pointer;
+  transition: all $transition-fast;
+  z-index: 10;
+
+  @include mobile {
+    width: 28px;
+    height: 28px;
+    font-size: $font-size-base;
+    top: $spacing-sm;
+    right: $spacing-sm;
+  }
+
+  &:hover {
+    background: rgba(244, 67, 54, 0.3);
+    border-color: $color-danger;
+    color: $color-danger;
+    transform: scale(1.1);
+  }
+}
+
+// 模态框标题
+@mixin modal-title {
+  --base-title-size: #{$font-size-3xl};
+  font-size: $font-size-3xl;
+  color: $color-text-gold;
+  text-align: center;
+  margin-bottom: $spacing-xl;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+
+  @include mobile {
+    --base-title-size: #{$font-size-2xl};
+    font-size: $font-size-2xl;
+    margin-bottom: $spacing-md;
+  }
+
+  @include small-screen {
+    --base-title-size: #{$font-size-xl};
+    font-size: $font-size-xl;
+    margin-bottom: $spacing-sm;
+  }
+}
+
+// 表单控件
+@mixin form-control {
+  --base-font-size: #{$font-size-base};
+  --base-padding: #{$spacing-md};
+  --base-border-radius: #{$border-radius-sm};
+
+  padding: $spacing-md;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid $color-border-gold;
+  color: $color-text-primary;
+  font-size: $font-size-base;
+  font-family: $font-family-primary;
+  border-radius: $border-radius-sm;
+  transition: all $transition-base;
+
+  @include mobile {
+    --base-padding: #{$spacing-sm};
+    --base-font-size: #{$font-size-sm};
+    padding: $spacing-sm;
+    font-size: $font-size-sm;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary-gold;
+    box-shadow: $shadow-gold;
+  }
+
+  &::placeholder {
+    color: $color-text-muted;
+  }
+}
+
+// 按钮组
+@mixin button-group {
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+
+  @include mobile {
+    gap: $spacing-sm;
+  }
+
+  @include small-screen {
+    flex-direction: column;
+  }
+}
