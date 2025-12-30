@@ -1,4 +1,8 @@
 import { compare } from 'compare-versions';
+<<<<<<< HEAD
+=======
+import { toDotPath } from 'zod/v4/core';
+>>>>>>> 91f45eafe3411b189964b27942e50d96f7d02445
 
 export function assignInplace<T>(destination: T[], new_array: T[]): T[] {
   destination.length = 0;
@@ -35,3 +39,22 @@ export async function checkMinimumVersion(expected: string, title: string) {
     toastr.error(`'${title}' 需要酒馆助手版本 >= '${expected}'`, '版本不兼容');
   }
 }
+<<<<<<< HEAD
+=======
+
+export function prettifyErrorWithInput(error: z.ZodError) {
+  return _([...error.issues])
+    .sortBy(issue => issue.path?.length ?? 0)
+    .flatMap(issue => {
+      const lines = [`✖ ${issue.message}`];
+      if (issue.path?.length) {
+        lines.push(`  → 路径: ${toDotPath(issue.path)}`);
+      }
+      if (issue.input !== undefined) {
+        lines.push(`  → 输入: ${JSON.stringify(issue.input)}`);
+      }
+      return lines;
+    })
+    .join('\n');
+}
+>>>>>>> 91f45eafe3411b189964b27942e50d96f7d02445
